@@ -1,0 +1,3 @@
+set xrange[0:1]
+set yrange[0:1]
+plot '_gene.dat' with  lt -1replot '_protein.dat' with  lt 2replot '_mRNA.dat' with  lt 6replot '_miRNA.dat' with  lt 1replot '_ncRNA.dat' with  lt 3
