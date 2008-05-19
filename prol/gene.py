@@ -32,9 +32,7 @@ class Gene:
         introns = [match for match in intron_regex.findall(pre_mRNA)]
         mRNA = "".join(intron_regex.split(pre_mRNA))
 
-        return (RNA(mRNA), introns)
-        
-        
+        return (RNA(mRNA), introns)       
 
     def __str__ (self):
         """ Builds a string representation of this gene """
