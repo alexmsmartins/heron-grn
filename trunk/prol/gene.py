@@ -1,5 +1,6 @@
 import re
 from rna import *
+from util import *
 
 class Gene:
     """ Just a simple Gene """
@@ -15,10 +16,7 @@ class Gene:
     def transcribe (self):
         """ Transcribes the conding region into precursor mRNA """
 
-        # This function converts 0 <-> 1 and 2 <-> 3
-        conv = lambda n: abs(1 - n * ((n % 2) * 2 - 1))
-
-        return "".join([str(conv(int(x))) for x in self.coding_region])
+        return "".join([str(complement(int(x))) for x in self.coding_region])
 
     def splice (self):
         """ Splices the pre-mRNA into mRNA and introns """
