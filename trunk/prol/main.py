@@ -4,6 +4,7 @@ import rna
 import protein
 import graph
 import random
+import pydot
 
 # Exemplo do paper
 #genome = Genome("1111121203221103300301011013232200121230320022321230302031111")
@@ -81,7 +82,18 @@ if __name__ == '__main__':
     # Todo
     # Create connections between miRNA and mRNA
 
-    print len(grn.weights)
+    #print len(grn.weights)
+    edges = []
+    
+    for node in grn.get_nodes():
+        for edge in grn.nodes[node]:
+            edges += (str(node), str(edge))
+    
+    g = pydot.graph_from_edges(edges)
+    g.write('banana.dot');
+    
+    
+    #g.write_jpeg('graph_from_edges_dot.jpg', prog='dot')  
 #                blah[protein] = gene
 
 #	        print "%s binds to %s" % (str(protein), str(gene))
