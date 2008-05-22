@@ -4,7 +4,7 @@
 """
 prol-evolution GRN, a model for regulatory gene networks
 
-Copyright (C) 2008 Luis Pureza, Oseias Santos, Pedro Matrins and
+Copyright (C) 2008 Luis Pureza, Oseias Santos, Pedro Martins and
 Ricardo Pereira.
  
 This program is free software: you can redistribute it and/or modify
