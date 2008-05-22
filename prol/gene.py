@@ -32,6 +32,7 @@ class Gene(GRNElement):
         Initializes a new gene with the given regulatory and coding 
         regions 
         """
+	GRNElement.__init__(self, None)
         self.regulatory_region = regulatory_region
         self.coding_region = coding_region
 

@@ -1,5 +1,4 @@
 #! /usr/bin/python
-# -*- coding: utf-8 -*-
 
 """
 prol-evolution GRN, a model for regulatory gene networks
@@ -33,7 +32,7 @@ import pydot
 avg = lambda l: sum(l) / len(l)
 miRNA_binding_site_size = 6
 protein_gene_binding_site_size = 6
-protein_gene_binding_threshold = 0.34
+protein_gene_binding_threshold = 0.3
 
 
 def create_graph(genes, mRNAs, ncRNAs, proteins, miRNAs):
@@ -51,22 +50,22 @@ def create_graph(genes, mRNAs, ncRNAs, proteins, miRNAs):
     # Create connections between genes and mRNA
     for mRNA in mRNAs:
         assert isinstance(mRNA.parent, Gene)
-        grn.add_edge(mRNA.parent, mRNA, 1)
+        grn.add_arrow(mRNA.parent, mRNA, 1)
 
     # Create connections between genes and ncRNA
     for ncRNA in ncRNAs:
         assert isinstance(ncRNA.parent, Gene)
-        grn.add_edge(ncRNA.parent, ncRNA, 1)
+        grn.add_arrow(ncRNA.parent, ncRNA, 1)
 
     # Create connections between ncRNA and miRNA
     for miRNA in miRNAs:
         assert isinstance(miRNA.parent, NonCodingRNA)
-        grn.add_edge(miRNA.parent, miRNA, 1)
+        grn.add_arrow(miRNA.parent, miRNA, 1)
 
     # Create connections between mRNA and proteins
     for protein in proteins:
         assert isinstance(protein.parent, MessengerRNA)
-        grn.add_edge(protein.parent, protein, 1)
+        grn.add_arrow(protein.parent, protein, 1)
 
     # Create connections between proteins and genes
     for protein in proteins:
@@ -74,23 +73,71 @@ def create_graph(genes, mRNAs, ncRNAs, proteins, miRNAs):
             if protein.binds_to_gene(avg, gene, \
                                      protein_gene_binding_site_size, \
                                      protein_gene_binding_threshold):
-                grn.add_edge(protein, gene, wt=random.choice([-1, 1]))
+                grn.add_arrow(protein, gene, wt=random.choice([-1, 1]))
 
     # Create connections between miRNAs and mRNAs
     for miRNA in miRNAs:
         for mRNA in mRNAs:
             if miRNA.binds_to_mRNA(mRNA):
-                grn.add_edge(miRNA, mRNA, -1)
+                grn.add_arrow(miRNA, mRNA, -1)
 
     return grn
 
+
+def initialize_network(grn, probability):
+    """
+    Activates some genes choosen randomly.
+    """
+    for node in grn.get_nodes():
+        if isinstance(node, Gene) and random.random() <= probability:
+            node.enabled = True
+    
+
+def simulate_network(grn, steps):
+    """
+    Simulate the execution of the GRN for a number of steps
+    """
+    
+    for i in range(steps):
+        on = []
+        off = []
+        j = 0
+        for node in grn.get_nodes():
+            if isinstance(node, Gene):
+                if node.enabled:
+                    print "%d\t%d" % (j, i)
+                j += 1
+
+            # For each neighbor...
+            for neighbor in grn.get_node(node):
+                weight = grn.weights[(node, neighbor)]
+
+                if node.enabled == True:
+                    if weight > 0:
+                        # Activate the neighbor
+                        on.append(neighbor)
+                    else:
+                        # Repress the neighbor
+                        off.append(neighbor)
+                else:
+                    # Any active element turns inactive if its activator
+                    # is not active
+                    if weight > 0 and neighbor.enabled:
+                        off.append(neighbor)
+
+        for element in on:
+            element.enabled = True
+
+        # Repression takes precedence and so is applied after activation
+        for element in off:
+            element.enabled = False
 
 if __name__ == '__main__':
     # Exemplo do paper
     #genes = Genome("1111121203221103300301011013232200121230320022321230302031111").get_genes()
 
     # Generate random genome
-    genes = generate_random_genome(100000).get_genes()
+    genes = generate_random_genome(500000).get_genes()
     mRNAs = set()
     ncRNAs = []
 
@@ -124,22 +171,25 @@ if __name__ == '__main__':
     # Create the graph
     grn = create_graph(genes, mRNAs, ncRNAs, proteins, miRNAs)
 
-    edges = []
-    for i in range(len(grn.get_nodes())):
-        node = grn.get_nodes()[i]
-        for edge in grn.nodes[node]:
-            edges += (str(node), str(edge))
+    initialize_network(grn, 0.5)
+    simulate_network(grn, 100)
+
+#    edges = []
+#    for i in range(len(grn.get_nodes())):
+#        node = grn.get_nodes()[i]
+#        for edge in grn.nodes[node]:
+#            edges += (str(node), str(edge))
 
 #    for node in grn.get_nodes():
 #        for edge in grn.nodes[node]:
 #            edges += (str(node), str(edge))
     
-    g = pydot.graph_from_edges(edges)
-    g.write('banana.dot');
+#    g = pydot.graph_from_edges(edges)
+#    g.write('banana.dot');
 
 
-    print "Number of genes: %d" % len(genes)
-    print "Number of mRNAs: %d" % len(mRNAs)
-    print "Number of proteins: %d" % len(proteins)
-    print "Number of ncRNA: %d" % len(ncRNAs)
-    print "Number of miRNA: %d" % len(miRNAs)
+#    print "Number of genes: %d" % len(genes)
+#    print "Number of mRNAs: %d" % len(mRNAs)
+#    print "Number of proteins: %d" % len(proteins)
+#    print "Number of ncRNA: %d" % len(ncRNAs)
+#    print "Number of miRNA: %d" % len(miRNAs)

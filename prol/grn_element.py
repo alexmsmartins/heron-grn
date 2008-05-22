@@ -32,4 +32,5 @@ class GRNElement(object):
         - `parent`: The parent node of this element
         """
         self.parent = parent
+        self.enabled = False
         
