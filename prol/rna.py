@@ -1,3 +1,24 @@
+"""
+prol-evolution GRN, a model for regulatory gene networks
+
+Copyright (C) 2008 Luis Pureza, Oseias Santos, Pedro Matrins and
+Ricardo Pereira.
+ 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+ 
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+
 import re
 from grn_element import *
 from defs import *
@@ -16,7 +37,8 @@ class MessengerRNA (GRNElement):
         """ Translate the mRNA into proteins """
 
         # Find the start codon
-        start_codon = translation_table.keys()[translation_table.values().index(MET)]
+        index_of_MET = translation_table.values().index(MET)
+        start_codon = translation_table.keys()[index_of_MET]
         index = self.sequence.find(start_codon)
         if index != -1:
             aminoacids = []
@@ -26,7 +48,7 @@ class MessengerRNA (GRNElement):
                 if aminoacid == STOP:
                     break
                 
-                aminoacids.append(translation_table[codon])
+                aminoacids.append(aminoacid)
                 
             return Protein(self, aminoacids)
             
@@ -45,7 +67,8 @@ class NonCodingRNA (GRNElement):
 
     def create_miRNAs (self, binding_size):
         """ Creates miRNAs from this ncRNA """
-        return [MicroRNA(self, self.sequence[index:index + binding_size]) for index in self.__find_stems(binding_size)]
+        return [MicroRNA(self, self.sequence[index:index + binding_size]) \
+                for index in self.__find_stems(binding_size)]
 
     def __find_stems (self, binding_size):
         """ Checks if this ncRNA contains a stem loop """
@@ -53,11 +76,11 @@ class NonCodingRNA (GRNElement):
         stems = []
         i = 0
         while i < len(self.sequence) - binding_size:
-            segment = self.sequence[i:i + binding_size]
+            segment = complement_string(self.sequence[i:i + binding_size])[::-1]
             
             # Check if the rest of the ncRNA sequence contains the reverse
-            # of the complement 
-            index = self.sequence.find(complement_string(segment)[::-1], i + binding_size)
+            # of the complement
+            index = self.sequence.find(segment, i + binding_size)
             if index != -1:
                 stems.append(i)
                 
@@ -81,7 +104,15 @@ class MicroRNA (GRNElement):
         """ Creates new miRNA """
 	GRNElement.__init__(self, parent)
         self.sequence = sequence
+
+    def binds_to_mRNA(self, mRNA):
+        """
+        Checks if this miRNA binds to the given mRNA
+        """
+        return mRNA.sequence.find(complement_string(self.sequence)) != -1
         
     def __str__ (self):
-        """ Builds a string representation of this miRNA """
+        """
+        Builds a string representation of this miRNA
+        """
         return "miRNA(%s)" % str(self.sequence)
