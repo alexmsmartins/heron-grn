@@ -41,11 +41,8 @@ class Gene(GRNElement):
 
         return "".join([str(complement(int(x))) for x in self.coding_region])
 
-    def splice (self):
+    def splice (self, U1_left, U1_right):
         """ Splices the pre-mRNA into mRNA and introns """
-        
-        U1_left = "30"
-        U1_right = "13"
 
         intron_regex = re.compile(U1_left + ".+?" + U1_right)
         pre_mRNA = self.transcribe()
