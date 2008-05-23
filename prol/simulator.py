@@ -34,6 +34,8 @@ def parse_args():
     parser = OptionParser(usage=usage)
     parser.add_option("-s", "--steps", dest="steps", type="int", default=100,
                       help="Number of steps")
+    parser.add_option("-v", action="store_true", dest="verbose",
+                      help="Verbose mode")
     
     (options, args) = parser.parse_args()
 
@@ -55,13 +57,15 @@ def initialize_network(grn, probability):
             node.enabled = True
     
 
-def simulate_network(grn, steps):
+def simulate_network(grn, steps, options):
     """
     Simulate the execution of the GRN for a number of steps
     """
 
     data = []
     for i in range(steps):
+        if options.verbose:
+            print " * Step %3d of %d" % (i + 1, steps)
         on = []
         off = []
         j = 0
@@ -116,7 +120,7 @@ if __name__ == '__main__':
     chart("set yrange[0:%d]" % options.steps)
 
     initialize_network(grn, 0.5)
-    data = simulate_network(grn, options.steps)
+    data = simulate_network(grn, options.steps, options)
 
     chart.plot(data)
 
