@@ -85,7 +85,6 @@ class NonCodingRNA (GRNElement):
                 stems.append(i)
                 
                 # Proceed after this stem
-                # TODO: What if there is another stem in the middle of this one?
                 i = index + binding_size - 1
                 
             i += 1

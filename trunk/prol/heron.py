@@ -28,11 +28,67 @@ import protein
 import graph
 import random
 import pydot
+import pickle
+import yaml
+from optparse import OptionParser
 
-avg = lambda l: sum(l) / len(l)
-miRNA_binding_site_size = 6
-protein_gene_binding_site_size = 6
-protein_gene_binding_threshold = 0.3
+# Default configuration
+config = {
+    "miRNA/mRNA binding site size" : 6,
+    "protein/gene binding site size" : 6,
+    "protein/gene binding threshold" : 0.3,
+    "U1 left" : "30",
+    "U1 right" : "13",
+    "promoter" : "0101",
+    "termination" : "1111"
+}
+
+avg = lambda list: sum(list) / len(list)
+
+
+def read_configuration(filename):
+    """
+    Read the configuration from some file
+    """
+    try:
+        fx = open(filename, "r")
+        config = yaml.load(fx)
+        fx.close()
+    except IOError, (errno, strerror):
+        print "Error while loading the configuration: %s" % strerror
+
+
+def parse_args():
+    """
+    Parse command-line arguments
+    """
+    usage = "usage: %prog [options] <genome size> <output>"
+    parser = OptionParser(usage=usage)
+    parser.add_option("-c", "--config", dest="filename",
+                      help="configuration file", metavar="FILE")
+    parser.add_option("-d", "--dot", dest="dot_filename",
+                      help="Write graph to the dot format", metavar="FILE")
+    parser.add_option("-s", action="store_true", dest="statistics",
+                      help="Print some statistics")
+    
+    (options, args) = parser.parse_args()
+
+    if len(args) != 2:
+        parser.error("Incorrent number of arguments")
+        exit()
+
+    try:
+        genome_size = int(args[0])
+    except:
+        parser.error("Invalid genome size")
+        exit()
+        
+    output_file = args[1]
+        
+    if options.filename != None:
+        read_configuration(options.filename)
+
+    return (options, genome_size, output_file)
 
 
 def create_graph(genes, mRNAs, ncRNAs, proteins, miRNAs):
@@ -71,8 +127,8 @@ def create_graph(genes, mRNAs, ncRNAs, proteins, miRNAs):
     for protein in proteins:
         for gene in genes:
             if protein.binds_to_gene(avg, gene, \
-                                     protein_gene_binding_site_size, \
-                                     protein_gene_binding_threshold):
+                                     config["protein/gene binding site size"], \
+                                     config["protein/gene binding threshold"]):
                 grn.add_arrow(protein, gene, wt=random.choice([-1, 1]))
 
     # Create connections between miRNAs and mRNAs
@@ -84,66 +140,21 @@ def create_graph(genes, mRNAs, ncRNAs, proteins, miRNAs):
     return grn
 
 
-def initialize_network(grn, probability):
-    """
-    Activates some genes choosen randomly.
-    """
-    for node in grn.get_nodes():
-        if isinstance(node, Gene) and random.random() <= probability:
-            node.enabled = True
-    
-
-def simulate_network(grn, steps):
-    """
-    Simulate the execution of the GRN for a number of steps
-    """
-    
-    for i in range(steps):
-        on = []
-        off = []
-        j = 0
-        for node in grn.get_nodes():
-            if isinstance(node, Gene):
-                if node.enabled:
-                    print "%d\t%d" % (j, i)
-                j += 1
-
-            # For each neighbor...
-            for neighbor in grn.get_node(node):
-                weight = grn.weights[(node, neighbor)]
-
-                if node.enabled == True:
-                    if weight > 0:
-                        # Activate the neighbor
-                        on.append(neighbor)
-                    else:
-                        # Repress the neighbor
-                        off.append(neighbor)
-                else:
-                    # Any active element turns inactive if its activator
-                    # is not active
-                    if weight > 0 and neighbor.enabled:
-                        off.append(neighbor)
-
-        for element in on:
-            element.enabled = True
-
-        # Repression takes precedence and so is applied after activation
-        for element in off:
-            element.enabled = False
-
 if __name__ == '__main__':
+    (options, genome_size, output_file) = parse_args()
+    
     # Exemplo do paper
     #genes = Genome("1111121203221103300301011013232200121230320022321230302031111").get_genes()
 
     # Generate random genome
-    genes = generate_random_genome(500000).get_genes()
+    genes = generate_random_genome(genome_size).get_genes(config["promoter"], \
+                                                          config["termination"])
     mRNAs = set()
     ncRNAs = []
 
     # Splice the genes
     for gene in genes:       
-        (mRNA, gene_ncRNAs) = gene.splice()
+        (mRNA, gene_ncRNAs) = gene.splice(config["U1 left"], config["U1 right"])
 	mRNAs.add(mRNA)
 	ncRNAs += gene_ncRNAs
 
@@ -166,30 +177,31 @@ if __name__ == '__main__':
     # Create miRNAs
     miRNAs = []
     for ncRNA in ncRNAs:
-	miRNAs += ncRNA.create_miRNAs(miRNA_binding_site_size)
+	miRNAs += ncRNA.create_miRNAs(config["miRNA/mRNA binding site size"])
 
     # Create the graph
     grn = create_graph(genes, mRNAs, ncRNAs, proteins, miRNAs)
 
-    initialize_network(grn, 0.5)
-    simulate_network(grn, 100)
+    # Save the graph to the output file
+    fx = open(output_file, "w")
+    pickle.dump(grn, fx)
+    fx.close()
 
-#    edges = []
-#    for i in range(len(grn.get_nodes())):
-#        node = grn.get_nodes()[i]
-#        for edge in grn.nodes[node]:
-#            edges += (str(node), str(edge))
+    if options.statistics:
+        print "Number of genes: %d" % len(genes)
+        print "Number of mRNAs: %d" % len(mRNAs)
+        print "Number of proteins: %d" % len(proteins)
+        print "Number of ncRNA: %d" % len(ncRNAs)
+        print "Number of miRNA: %d" % len(miRNAs)
 
-#    for node in grn.get_nodes():
-#        for edge in grn.nodes[node]:
-#            edges += (str(node), str(edge))
+    if options.dot_filename != None:
+        edges = []
+        for node in grn.get_nodes():
+            for edge in grn.nodes[node]:
+                edges += (str(node), str(edge))
     
-#    g = pydot.graph_from_edges(edges)
-#    g.write('banana.dot');
+        g = pydot.graph_from_edges(edges)
+        g.write(options.dot_filename);
 
 
-#    print "Number of genes: %d" % len(genes)
-#    print "Number of mRNAs: %d" % len(mRNAs)
-#    print "Number of proteins: %d" % len(proteins)
-#    print "Number of ncRNA: %d" % len(ncRNAs)
-#    print "Number of miRNA: %d" % len(miRNAs)
+

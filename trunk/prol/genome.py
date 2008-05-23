@@ -40,11 +40,9 @@ class Genome(object):
         """ Returns a string representation of the genome """
         return str(self.sequence)
 
-    def get_genes (self):
+    def get_genes (self, promoter, termination):
         """ Returns the genes written in the genome """
 
-        promoter = "0101"
-        termination = "1111"
         genes = []
 
         termination_re = re.compile(termination)

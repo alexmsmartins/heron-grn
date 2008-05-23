@@ -1,0 +1,7 @@
+U1 left: '30'
+U1 right: '13'
+miRNA/mRNA binding site size: 6
+promoter: '0101'
+protein/gene binding site size: 6
+protein/gene binding threshold: 0.3
+termination: '1111'
