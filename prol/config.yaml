@@ -5,3 +5,5 @@ promoter: '0101'
 protein/gene binding site size: 6
 protein/gene binding threshold: 0.3
 termination: '1111'
+binding function: 'lambda list: sum(list) / len(list)'
+protein inhibition rate: 0.25
