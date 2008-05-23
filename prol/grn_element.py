@@ -24,6 +24,8 @@ class GRNElement(object):
     Base class for all GRN graph elements
     """
 
+    count = 0
+
     def __init__(self, parent):
         """
         Creates a new GRN element with the given parent
@@ -32,5 +34,7 @@ class GRNElement(object):
         - `parent`: The parent node of this element
         """
         self.parent = parent
+        self.__class__.count += 1
+        self.id = "%s_%d" % (type(self).__name__, self.__class__.count)
         self.enabled = False
         
