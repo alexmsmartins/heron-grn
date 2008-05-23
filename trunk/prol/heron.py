@@ -231,9 +231,9 @@ if __name__ == '__main__':
         edges = []
         for node in grn.get_nodes():
             for edge in grn.nodes[node]:
-                edges += (str(node), str(edge))
-    
-        g = pydot.graph_from_edges(edges)
+                edges.append((node.id, edge.id))
+
+        g = pydot.graph_from_edges(edges, directed=True)
         g.write(options.dot_filename);
 
 
