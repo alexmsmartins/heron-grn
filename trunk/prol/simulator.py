@@ -23,17 +23,36 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from gene import *
 import pickle
 import random
-from optparse import OptionParser
+from optparse import OptionParser, OptionValueError
 import Gnuplot, Gnuplot.funcutils
 
 def parse_args():
     """
     Parse command-line arguments
     """
+
+    def parse_types(option, opt, value, parser):
+	"""
+	Parses the -t command-line option
+	"""
+	type_str = parser.rargs[0]
+	try:
+	    types = map(eval, type_str.split(","))
+	    setattr(parser.values, option.dest, types)
+	except:
+	    raise OptionValueError("Unknown type")
+	del parser.rargs[0]
+
+
     usage = "usage: %prog [options] <input>"
     parser = OptionParser(usage=usage)
-    parser.add_option("-s", "--steps", dest="steps", type="int", default=100,
+    parser.add_option("-p", "--probability", dest="probability", type="float",
+		      default=0.5, help="Initial gene activation probability")
+    parser.add_option("-s", "--steps", dest="steps", type="int", default=10,
                       help="Number of steps")
+    parser.add_option("-t", "--types", dest="types", action="callback",
+		      callback=parse_types, default=[Gene],
+		      help="Types to plot in the graph, separated by commas.")
     parser.add_option("-v", action="store_true", dest="verbose",
                       help="Verbose mode")
     
@@ -57,7 +76,7 @@ def initialize_network(grn, probability):
             node.enabled = True
     
 
-def simulate_network(grn, steps, options):
+def simulate_network(grn, start_step, steps, options):
     """
     Simulate the execution of the GRN for a number of steps
     """
@@ -65,15 +84,15 @@ def simulate_network(grn, steps, options):
     data = []
     for i in range(steps):
         if options.verbose:
-            print " * Step %3d of %d" % (i + 1, steps)
+            print " * Step %3d of %d" % (start_step + i + 1, steps)
         on = []
         off = []
         j = 0
         for node in grn.get_nodes():
-            if isinstance(node, Gene):
+	    if type(node) in options.types:
                 if node.enabled:
-                    data.append((j, i))
-                j += 1
+                    data.append((j, start_step + i))
+		j += 1
 
             # For each neighbor...
             for neighbor in grn.get_node(node):
@@ -112,16 +131,17 @@ if __name__ == '__main__':
         print "Error while reading the graph file: %s" % strerror
         exit()
 
+    initialize_network(grn, options.probability)
+
     chart = Gnuplot.Gnuplot()
-    chart.title("Network")
-    chart.xlabel("Gene")
-    chart.ylabel("Step")
+    chart.title("Network dynamics")
+    chart.xlabel("Genes")
+    chart.ylabel("Steps")
     chart("set pointsize 0.1")
-    chart("set yrange[0:%d]" % options.steps)
-
-    initialize_network(grn, 0.5)
-    data = simulate_network(grn, options.steps, options)
-
-    chart.plot(data)
-
-    raw_input("Press enter to continue...")
+    data = []
+    step = 0
+    while True:
+	chart("set yrange[0:%d]" % (step + options.steps))
+	data += simulate_network(grn, step, options.steps, options)
+	chart.plot(data)
+	step += options.steps
