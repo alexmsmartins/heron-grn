@@ -30,6 +30,7 @@ import random
 import pydot
 import pickle
 import yaml
+import sys
 from optparse import OptionParser
 
 # Default configuration
@@ -40,11 +41,10 @@ config = {
     "U1 left" : "30",
     "U1 right" : "13",
     "promoter" : "0101",
-    "termination" : "1111"
+    "termination" : "1111",
+    "binding function" : "lambda list: sum(list) / len(list)",
+    "protein inhibition rate" : 0.5
 }
-
-avg = lambda list: sum(list) / len(list)
-
 
 def read_configuration(filename):
     """
@@ -128,24 +128,33 @@ def create_graph(genes, mRNAs, ncRNAs, proteins, miRNAs, options):
     # Create connections between proteins and genes
     if options.verbose:
         print "   - Finding bindings between proteins and genes"
+    protein_gene_bindings = 0
     for (i, protein) in zip(range(len(proteins)), proteins):
         if options.verbose:
-            print "     %2.0f%%" % (100.0 * i / len(proteins))
+            print "    %2.0f%%" % (100.0 * i / len(proteins)),
+	    sys.stdout.flush()
         for gene in genes:
-            if protein.binds_to_gene(avg, gene, \
+            if protein.binds_to_gene(eval(config["binding function"]), gene, \
                                      config["protein/gene binding site size"], \
                                      config["protein/gene binding threshold"]):
-                grn.add_arrow(protein, gene, wt=random.choice([-1, 1]))
+		wt = 1
+		if random.random() <= config["protein inhibition rate"]:
+		    wt = -1
+                grn.add_arrow(protein, gene, wt)
+		protein_gene_bindings += 1
 
     # Create connections between miRNAs and mRNAs
     if options.verbose:
+	print
         print "   - Finding bindings between miRNAs and mRNAs"
+    miRNA_mRNA_bindings = 0
     for miRNA in miRNAs:
         for mRNA in mRNAs:
             if miRNA.binds_to_mRNA(mRNA):
                 grn.add_arrow(miRNA, mRNA, -1)
+		miRNA_mRNA_bindings += 1
 
-    return grn
+    return (grn, protein_gene_bindings, miRNA_mRNA_bindings)
 
 
 if __name__ == '__main__':
@@ -198,7 +207,8 @@ if __name__ == '__main__':
     # Create the graph
     if options.verbose:
         print " * Creating the graph"
-    grn = create_graph(genes, mRNAs, ncRNAs, proteins, miRNAs, options)
+    (grn, protein_gene_bindings, miRNA_mRNA_bindings) = \
+	create_graph(genes, mRNAs, ncRNAs, proteins, miRNAs, options)
 
     # Save the graph to the output file
     fx = open(output_file, "w")
@@ -206,12 +216,17 @@ if __name__ == '__main__':
     fx.close()
 
     if options.statistics:
-        print "Number of genes: %d" % len(genes)
-        print "Number of mRNAs: %d" % len(mRNAs)
-        print "Number of proteins: %d" % len(proteins)
-        print "Number of ncRNA: %d" % len(ncRNAs)
-        print "Number of miRNA: %d" % len(miRNAs)
+	print
+	print " * Statistics:"
+        print "   - Number of genes: %d" % len(genes)
+        print "   - Number of mRNAs: %d" % len(mRNAs)
+        print "   - Number of proteins: %d" % len(proteins)
+        print "   - Number of ncRNA: %d" % len(ncRNAs)
+        print "   - Number of miRNA: %d" % len(miRNAs)
+        print "   - Number of Protein/Gene bindings: %d" % protein_gene_bindings
+        print "   - Number of miRNA/mRNA bindings: %d" % miRNA_mRNA_bindings
 
+    # Save to .dot format
     if options.dot_filename != None:
         edges = []
         for node in grn.get_nodes():
