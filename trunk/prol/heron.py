@@ -70,6 +70,8 @@ def parse_args():
                       help="Write graph to the dot format", metavar="FILE")
     parser.add_option("-s", action="store_true", dest="statistics",
                       help="Print some statistics")
+    parser.add_option("-v", action="store_true", dest="verbose",
+                      help="Verbose mode")
     
     (options, args) = parser.parse_args()
 
@@ -91,7 +93,7 @@ def parse_args():
     return (options, genome_size, output_file)
 
 
-def create_graph(genes, mRNAs, ncRNAs, proteins, miRNAs):
+def create_graph(genes, mRNAs, ncRNAs, proteins, miRNAs, options):
     """
     Creates the graph containing the gene regulatory network
     """
@@ -124,7 +126,11 @@ def create_graph(genes, mRNAs, ncRNAs, proteins, miRNAs):
         grn.add_arrow(protein.parent, protein, 1)
 
     # Create connections between proteins and genes
-    for protein in proteins:
+    if options.verbose:
+        print "   - Finding bindings between proteins and genes"
+    for (i, protein) in zip(range(len(proteins)), proteins):
+        if options.verbose:
+            print "     %2.0f%%" % (100.0 * i / len(proteins))
         for gene in genes:
             if protein.binds_to_gene(avg, gene, \
                                      config["protein/gene binding site size"], \
@@ -132,6 +138,8 @@ def create_graph(genes, mRNAs, ncRNAs, proteins, miRNAs):
                 grn.add_arrow(protein, gene, wt=random.choice([-1, 1]))
 
     # Create connections between miRNAs and mRNAs
+    if options.verbose:
+        print "   - Finding bindings between miRNAs and mRNAs"
     for miRNA in miRNAs:
         for mRNA in mRNAs:
             if miRNA.binds_to_mRNA(mRNA):
@@ -147,18 +155,24 @@ if __name__ == '__main__':
     #genes = Genome("1111121203221103300301011013232200121230320022321230302031111").get_genes()
 
     # Generate random genome
+    if options.verbose:
+        print " * Generating the random genome with size %d " % genome_size
     genes = generate_random_genome(genome_size).get_genes(config["promoter"], \
                                                           config["termination"])
     mRNAs = set()
     ncRNAs = []
 
     # Splice the genes
+    if options.verbose:
+        print " * Splicing %d genes" % len(genes)
     for gene in genes:       
         (mRNA, gene_ncRNAs) = gene.splice(config["U1 left"], config["U1 right"])
 	mRNAs.add(mRNA)
 	ncRNAs += gene_ncRNAs
 
     # Translate the mRNAs into proteins
+    if options.verbose:
+        print " * Translating %d mRNAs" % len(mRNAs)
     proteins = []
     to_remove = set()
     for mRNA in mRNAs:
@@ -175,12 +189,16 @@ if __name__ == '__main__':
     mRNAs -= to_remove
 
     # Create miRNAs
+    if options.verbose:
+        print " * Creating miRNAs from %d ncRNAs" % len(ncRNAs)
     miRNAs = []
     for ncRNA in ncRNAs:
 	miRNAs += ncRNA.create_miRNAs(config["miRNA/mRNA binding site size"])
 
     # Create the graph
-    grn = create_graph(genes, mRNAs, ncRNAs, proteins, miRNAs)
+    if options.verbose:
+        print " * Creating the graph"
+    grn = create_graph(genes, mRNAs, ncRNAs, proteins, miRNAs, options)
 
     # Save the graph to the output file
     fx = open(output_file, "w")
