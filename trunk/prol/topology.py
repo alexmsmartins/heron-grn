@@ -94,12 +94,7 @@ def calc_avg_edge_count(graph):
     """
     Calcula o nÃºmero mÃ©dio de ligaÃ§Ãµes por nÃ³
     """
-    avg = 0;
-    
-    for i in graph.degree():
-        avg += i
-    
-    return avg / graph.size() 
+    return float(graph.number_of_edges())/graph.number_of_nodes()
 
 def scale_free(graph):
     """
@@ -120,60 +115,25 @@ def scale_free(graph):
 
     list_log_x = []
     list_log_y = []
-    #list_log = {}
-    #avg_listlog_x = 0
-    #avg_listlog_y = 0
+    
     for k, v in list.iteritems():
         list_log_x = list_log_x + [math.log(k)]
-        list_log_x = list_log_y + [math.log(v)]
-        #avg_listlog_x += math.log(k)
-        #avg_listlog_y += math.log(v)
-
-
-
-
-
-
-
-
-
-
-    #avg_listlog_x = avg_listlog_x/len(list_log)
-    #avg_listlog_y = avg_listlog_y/len(list_log)
-
-
-
-
-
-    """
-    numerator = 0
-    denominator = 0
-    for k, v in list_log.iteritems():
-        numerator = k * v
-        denominator = k*k
+        list_log_y = list_log_y + [math.log(v)]
+        
+    coefficients = polyfit(list_log_x,list_log_y,1)
     
-    numerator = numerator - len(list_log)*avg_listlog_x*avg_listlog_y
-    denominator = denominator - len(list_log)*avg_listlog_x*avg_listlog_x
+    print quadratic_error(coefficients[0], coefficients[1], list_log_x, list_log_y)
     
     
-    b = numerator/denominator
-    a = avg_listlog_y - b*avg_listlog_x
-    """
-    coefficients = polyfit(x,y,1)
-    
-    print quadratic_error(coefficients[0], coefficients[1], list_log)
-    
-    
-def quadratic_error(a, b, list):
+def quadratic_error(a, b, list_x, lixt_y):
     d = 0;
-    for x, y in list.iteritems():
+    for x, y in zip(list_x, lixt_y):
         d += pow(y - a*x+b, 2)
-    return sqrt(d/len(list))
+    return sqrt(d/len(list_x))
 
       
 def scale_free_from_file(path):
     """
     recebe um ficheiro para verificar se o grafo Ã© scale free
     """
-
     return scale_free(dot_to_NXGraph(pydot.graph_from_dot_file(path)))
