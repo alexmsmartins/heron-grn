@@ -122,7 +122,7 @@ def scale_free(graph):
         
     coefficients = polyfit(list_log_x,list_log_y,1)
     
-    print quadratic_error(coefficients[0], coefficients[1], list_log_x, list_log_y)
+    return quadratic_error(coefficients[0], coefficients[1], list_log_x, list_log_y)
     
     
 def quadratic_error(a, b, list_x, lixt_y):
