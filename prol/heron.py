@@ -28,7 +28,6 @@ import pydot
 import pickle
 import yaml
 import sys
-import wx
 from optparse import OptionParser
 
 
@@ -73,6 +72,7 @@ class Heron:
             Event notification stuff
             """
             if window != None and event != None:
+                import wx
                 evt = event(**args)
                 wx.PostEvent(window, evt)
 
@@ -281,6 +281,5 @@ if __name__ == '__main__':
     heron.dump(output_file)
 
     if options.dot_filename != None:
-        heron.save_as_dot(options.dot_filename)
-
+        heron.save_as_dot(options.dot_filename)    
 
