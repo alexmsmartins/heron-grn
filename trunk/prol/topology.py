@@ -88,7 +88,7 @@ def dot_to_NXGraph(dotgraph):
     for edge in dotgraph.get_edges():
         graph.add_edge((edge.get_source(), edge.get_destination()))
         
-    return graph
+    return graph.to_directed()
 
 def calc_avg_edge_count(graph):
     """
