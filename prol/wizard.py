@@ -352,7 +352,11 @@ class SavePage(wiz.WizardPageSimple):
 
         if dlg.ShowModal() == wx.ID_OK:
             dlg.Destroy()
-            self.path_button.SetLabel(dlg.GetPath())
+            path = dlg.GetPath()
+            if path[-4:] != ".her":
+                path += ".her"
+
+            self.path_button.SetLabel(path)
             wx.FindWindowById(wx.ID_FORWARD).Enable()
 
     def on_changed(self, event):
@@ -405,7 +409,6 @@ class Wizard(object):
         self.wizard.DestroyChildren()
 
 
-
 class Application(wx.App):
     """
     Wizard application
@@ -423,5 +426,4 @@ class Application(wx.App):
 if __name__ == '__main__':
     app = Application(False)
     app.MainLoop()
-
 
