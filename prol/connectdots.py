@@ -66,10 +66,12 @@ class MainWindow(wx.Frame):
 
         menu_data = (("&File",
                       #                      ('&New...\tCtrl+N', 'Create a new project', 'new', self.OnNewProject),
-                      ('&Open...\tCtrl+O', 'Open an existing project', 'open', self.on_open),
+                      ('&Open...\tCtrl+O', 'Open an existing project', 'open', self.on_file_open),
                       ('','','',''),
-                      ('&Quit\tCtrl+Q', 'Terminate the application', None, self.on_exit)
-                      ),
+                      ('&Quit\tCtrl+Q', 'Terminate the application', None, self.on_file_exit)),
+                     ('&View',
+                      ('&Statistics', 'View statistics', None, self.on_view_statistics)),
+                     
 #                     ('&Tools',
 #                      ('&Run', 'Runs the current GA', None, self.OnRun),
 #                      ('&Config', 'Changes the settings of the current GA', None, self.OnConfig)
@@ -100,7 +102,7 @@ class MainWindow(wx.Frame):
                 window.Bind(wx.EVT_MENU, handler, button)
         
         toolbar_data = (#("New", self.get_icon('new'), "Makes a new project", self.OnNewProject),
-                        ("Open", self.get_icon('open'), "Opens a new project", self.on_open)),
+                        ("Open", self.get_icon('open'), "Opens a new project", self.on_file_open)),
                         #("", "", "", ""),
                         #("Run", self.get_icon('run'), "Runs the current GA", self.OnRun),
                         #("Config", self.get_icon('config'), "Changes the settings of the current GA", self.OnConfig),
@@ -114,7 +116,7 @@ class MainWindow(wx.Frame):
         toolbar.Realize()
 
 
-    def on_open(self, event):
+    def on_file_open(self, event):
         """
         Event handler for the "Open" action
         """
@@ -130,11 +132,17 @@ class MainWindow(wx.Frame):
         dialog.Destroy()       
 
 
-    def on_exit(self, event):
+    def on_file_exit(self, event):
         """
         Event handler for when the user wants to quit the application
         """
         exit(0)
+
+    def on_view_statistics(self, event):
+        """
+        Show the statistics window
+        """
+        pass
 
     def get_icon(self, name):
         """

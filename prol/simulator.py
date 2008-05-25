@@ -48,7 +48,9 @@ def parse_args():
     parser = OptionParser(usage=usage)
     parser.add_option("-p", "--probability", dest="probability", type="float",
 		      default=0.5, help="Initial gene activation probability")
-    parser.add_option("-s", "--steps", dest="steps", type="int", default=10,
+    parser.add_option("-o", "--output", dest="output",
+		      help="Save the resulting graphic as an image")
+    parser.add_option("-s", "--steps", dest="steps", type="int", default=100,
                       help="Number of steps")
     parser.add_option("-t", "--types", dest="types", action="callback",
 		      callback=parse_types, default=[Gene],
@@ -76,47 +78,44 @@ def initialize_network(grn, probability):
             node.enabled = True
     
 
-def simulate_network(grn, start_step, steps, options):
+def simulate_network(grn, options):
     """
-    Simulate the execution of the GRN for a number of steps
+    Simulate the execution of the GRN for one step
     """
 
     data = []
-    for i in range(steps):
-        if options.verbose:
-            print " * Step %3d of %d" % (start_step + i + 1, steps)
-        on = []
-        off = []
-        j = 0
-        for node in grn.get_nodes():
-	    if type(node) in options.types:
-                if node.enabled:
-                    data.append((j, start_step + i))
-		j += 1
+    on = []
+    off = []
+    j = 0
+    for node in grn.get_nodes():
+        if type(node) in options.types:
+            if node.enabled:
+                data.append(j)
+            j += 1
 
-            # For each neighbor...
-            for neighbor in grn.get_node(node):
-                weight = grn.weights[(node, neighbor)]
+        # For each neighbor...
+        for neighbor in grn.get_node(node):
+            weight = grn.weights[(node, neighbor)]
 
-                if node.enabled == True:
-                    if weight > 0:
-                        # Activate the neighbor
-                        on.append(neighbor)
-                    else:
-                        # Repress the neighbor
-                        off.append(neighbor)
+            if node.enabled == True:
+                if weight > 0:
+                    # Activate the neighbor
+                    on.append(neighbor)
                 else:
-                    # Any active element turns inactive if its activator
-                    # is not active
-                    if weight > 0 and neighbor.enabled:
-                        off.append(neighbor)
+                    # Repress the neighbor
+                    off.append(neighbor)
+            else:
+                # Any active element turns inactive if its activator
+                # is not active
+                if weight > 0 and neighbor.enabled:
+                    off.append(neighbor)
 
-        for element in on:
-            element.enabled = True
+    for element in on:
+        element.enabled = True
 
-        # Repression takes precedence and so is applied after activation
-        for element in off:
-            element.enabled = False
+    # Repression takes precedence and so is applied after activation
+    for element in off:
+        element.enabled = False
 
     return data
 
@@ -137,11 +136,21 @@ if __name__ == '__main__':
     chart.title("Network dynamics")
     chart.xlabel("Genes")
     chart.ylabel("Steps")
-    chart("set pointsize 0.1")
+    chart("set pointsize 0.3")
+    if options.output != None:
+        chart("set terminal png")
+        chart("set output '%s'" % options.output)
     data = []
-    step = 0
-    while True:
-	chart("set yrange[0:%d]" % (step + options.steps))
-	data += simulate_network(grn, step, options.steps, options)
-	chart.plot(data)
-	step += options.steps
+    for step in range(options.steps):
+        if options.verbose:
+            print " * Step %3d of %d" % (step + 1, options.steps)
+
+        chart("set yrange[0:%d]" % (step + 1))
+	data += [(node, step) for node in simulate_network(grn, options)]
+        if options.output == None:
+            chart.plot(data)
+
+    chart.plot(data)
+
+    if options.output == None:
+        raw_input("")
