@@ -21,9 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from genome import *
-import gene
-import rna
-import protein
+from rna import NonCodingRNA
 import graph
 import random
 import pydot
@@ -216,7 +214,7 @@ class Heron:
             print
             print "   - Finding bindings between miRNAs and mRNAs"
         bindings = 0
-        for miRNA in miRNAs:
+        for (i, miRNA) in enumerate(miRNAs):
             advance(step=5, done=i*1.0/len(miRNAs), miRNA_mRNA_bindings=bindings)
             for mRNA in mRNAs:
                 if miRNA.binds_to_mRNA(mRNA):
