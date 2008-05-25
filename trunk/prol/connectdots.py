@@ -24,6 +24,21 @@ import wx
 import os
 import networkx as NX
 
+class StatisticsWindow(wx.Frame):
+    """ Program's main window """
+    
+    def __init__(self):
+        """
+        Initializes the window
+        """
+        self.height = 100
+        self.width = 100
+        wx.Frame.__init__(self, None, size=(self.width, self.height), title='Statistics')
+        self.CenterOnScreen()
+
+
+
+
 class MainWindow(wx.Frame):
     """ Program's main window """
     
@@ -142,7 +157,8 @@ class MainWindow(wx.Frame):
         """
         Show the statistics window
         """
-        pass
+        StatisticsWindow().Show()
+
 
     def get_icon(self, name):
         """
