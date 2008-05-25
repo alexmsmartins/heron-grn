@@ -19,7 +19,8 @@ else:
     end = int(argv[3])
     increment = int(argv[4])
     
-os.system("mkdir %s" % os.path.join("results", name))
+os.mkdir("results")
+os.mkdir("%s" % os.path.join("results", name))
 writer = csv.writer(open(os.path.join("results", name+".csv"), "w"), delimiter=";")
 writer.writerow(["Name",
                             "Number Genes",
@@ -34,7 +35,7 @@ writer.writerow(["Name",
     
 for x in range(init, end+1, increment):
     inittime = time.time()
-    os.system("python heron.py " + str(x) + " " + os.path.join(os.path.join("results", name), str(x) + ".txt") + " -d " + os.path.join(os.path.join("results", name), str(x) + ".txt"))
+    os.system("python heron.py " + str(x) + " " + os.path.join(os.path.join("results", name), str(x) + ".txt") + " -d " + os.path.join(os.path.join("results", name), str(x) + ".dot"))
     
     
     creationfenom = time.time() - inittime

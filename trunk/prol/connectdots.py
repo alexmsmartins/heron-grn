@@ -23,20 +23,50 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import wx
 import os
 import networkx as NX
+import topology
 
-class StatisticsWindow(wx.Frame):
-    """ Program's main window """
+class StatisticsWindow(wx.Dialog):
+    """ Statistics window """
     
-    def __init__(self):
+    def __init__(self, graph):
         """
         Initializes the window
         """
-        self.height = 100
-        self.width = 100
-        wx.Frame.__init__(self, None, size=(self.width, self.height), title='Statistics')
+        self.graph = graph
+        self.height = 250
+        self.width = 250
+        wx.Dialog.__init__(self, None, size=(self.width, self.height), title='Statistics')
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        self.SetSizer(sizer)
+
+        panel = wx.Panel(self, -1)
+        sizer.Add(panel, 1, wx.EXPAND)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        panel.SetSizer(sizer)
         self.CenterOnScreen()
 
+        self.create_list(panel)      
+        self.fill_list()
 
+    def create_list(self, panel):
+        self.list = wx.ListCtrl(panel, -1, style=wx.LC_REPORT)
+        self.list.InsertColumn(0, "Property")
+        self.list.InsertColumn(1, "Value", wx.LIST_FORMAT_RIGHT)
+        panel.GetSizer().Add(self.list, 1, wx.EXPAND)
+
+    def fill_list(self):
+        statistics = [("Number of nodes", lambda graph: graph.number_of_nodes()),
+                      ("Number of edges", lambda graph: graph.number_of_edges()),
+                      ("Average degree", topology.calc_avg_edge_count),
+                      ("Clustering coefficient", NX.cluster.average_clustering),
+                      ("Average shortest path", topology.calc_avg_graph_shortest_path)
+                     ]  
+        for label, func in statistics:
+            self.list.Append([label, func(self.graph)])
+
+        self.list.SetColumnWidth(0, 150)
+        self.list.SetColumnWidth(1, 80)
 
 
 class MainWindow(wx.Frame):
@@ -157,7 +187,8 @@ class MainWindow(wx.Frame):
         """
         Show the statistics window
         """
-        StatisticsWindow().Show()
+        dialog = StatisticsWindow(self.open_graph)
+        dialog.Show()
 
 
     def get_icon(self, name):
