@@ -70,14 +70,14 @@ def calc_avg_graph_shortest_path(graph):
     """
     listshortestpaths = NX.path.all_pairs_shortest_path_length(graph)
     avg = 0
-    i = 0
+    n = 0
     
     for i in listshortestpaths:
-        for i in listshortestpaths[i]:
+        for j in listshortestpaths[i]:
             avg = listshortestpaths[i][j]
-            i += 1
+            n += 1
     
-    return avg / i
+    return avg / n
 
 def dot_to_NXGraph(dotgraph):
     """
