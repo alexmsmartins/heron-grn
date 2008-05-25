@@ -6,21 +6,33 @@ import csv
 import sys
 import time
 import simulator as SIM
+import shutil
 
 argv = sys.argv
 
-if len(argv) != 5:
+if len(argv) != 8:
     print "error - args.."
-    print "Script.py <file name> <number genes initial> <number genes final> <increment>"
+    print "Script.py <file name> <number genes initial> <number genes final> <genes increment> <initial activation probability> <final activation probability> <probability increment>"
     exit()
 else:
     name = argv[1]
     init = int(argv[2])
     end = int(argv[3])
     increment = int(argv[4])
-    
+    initProb = float(argv[5])
+    endProb = float(argv[6])
+    incrementProb = float(argv[7])
+
+for root, dirs, files in os.walk("results", topdown=False):
+    for name in files:
+        os.remove(os.path.join(root, name))
+    for name in dirs:
+        os.rmdir(os.path.join(root, name))  
+os.rmdir("results")
+
 os.mkdir("results")
 os.mkdir("%s" % os.path.join("results", name))
+
 writer = csv.writer(open(os.path.join("results", name+".csv"), "w"), delimiter=";")
 writer.writerow(["Name",
                             "Number Genes",
@@ -37,7 +49,6 @@ for x in range(init, end+1, increment):
     inittime = time.time()
     os.system("python heron.py " + str(x) + " " + os.path.join(os.path.join("results", name), str(x) + ".txt") + " -d " + os.path.join(os.path.join("results", name), str(x) + ".dot"))
     
-    
     creationfenom = time.time() - inittime
     graph = PRG.dot_to_NXGraph(pydot.graph_from_dot_file(os.path.join(os.path.join("results", name), str(x) + ".dot")))
     
@@ -53,4 +64,6 @@ for x in range(init, end+1, increment):
                         str(creationfenom),
                         str(time.time() - inittime)]
     writer.writerow(tablerow)
+    for y in [initProb + j*incrementProb for j in range((endProb-initProb)/incrementProb + 1)]:
+        os.system("python simulator.py " + os.path.join(os.path.join("results", name), str(x) + ".txt") + " -p " + str(y) + " -o "+  os.path.join(os.path.join("results", name), str(x) + "-p" + str(y) + ".png") )
     
