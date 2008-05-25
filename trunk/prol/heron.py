@@ -193,9 +193,9 @@ class Heron:
         if verbose:
             print "   - Finding bindings between proteins and genes"
         for (i, protein) in enumerate(proteins):
-            if verbose:
-                print "    %2.0f%%" % (100.0 * i / len(proteins)),
-                sys.stdout.flush()
+#            if verbose:
+#                print "    %2.0f%%" % (100.0 * i / len(proteins)),
+#                sys.stdout.flush()
             advance(step=4, done=i*1.0/len(proteins), protein_gene_bindings=bindings)
             for gene in genes:
                 if protein.binds_to_gene(eval(self.config["binding function"]), gene, \
@@ -206,12 +206,13 @@ class Heron:
                         wt = -1
                     grn.add_arrow(protein, gene, wt)
                     bindings += 1
-
+                    
+        if verbose:
+            print "     ~ Found %d protein/gene bindings" % bindings
         advance(step=5, protein_gene_bindings=bindings)
                     
         # Create connections between miRNAs and mRNAs
         if verbose:
-            print
             print "   - Finding bindings between miRNAs and mRNAs"
         bindings = 0
         for (i, miRNA) in enumerate(miRNAs):
@@ -221,6 +222,8 @@ class Heron:
                     grn.add_arrow(miRNA, mRNA, -1)
                     bindings += 1
 
+        if verbose:
+            print "     ~ Found %d miRNA/mRNA bindings" % bindings
         advance(step=6, done=1, miRNA_mRNA_bindings=bindings)
 
         return grn
