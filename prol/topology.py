@@ -68,16 +68,10 @@ def calc_avg_graph_shortest_path(graph):
     """
     Calcula a mÃ©dia das distÃ¢ncias mais curtas entre todos os nÃ³s
     """
-    listshortestpaths = NX.path.all_pairs_shortest_path_length(graph)
-    avg = 0
-    n = 0
-    
-    for i in listshortestpaths:
-        for j in listshortestpaths[i]:
-            avg = listshortestpaths[i][j]
-            n += 1
-    
-    return avg / n
+    lengths = NX.path.all_pairs_shortest_path_length(graph)
+    print lengths
+    return sum(sum(lengths[node].values()) for node in lengths.keys()) / float(graph.number_of_nodes())
+
 
 def dot_to_NXGraph(dotgraph):
     """
@@ -85,10 +79,10 @@ def dot_to_NXGraph(dotgraph):
     """
     graph = NX.Graph()
     
-    for edge in dotgraph.get_edges():
+    for edge in dotgraph.get_edge_list():
         graph.add_edge((edge.get_source(), edge.get_destination()))
         
-    return graph.to_directed()
+    return graph
 
 def calc_avg_edge_count(graph):
     """
@@ -122,7 +116,7 @@ def scale_free(graph):
         
     coefficients = polyfit(list_log_x,list_log_y,1)
     
-    return quadratic_error(coefficients[0], coefficients[1], list_log_x, list_log_y)
+    print quadratic_error(coefficients[0], coefficients[1], list_log_x, list_log_y)
     
     
 def quadratic_error(a, b, list_x, lixt_y):
