@@ -130,6 +130,12 @@ class PlotOptionsWindow(wx.Dialog):
 
 
     def on_ok(self, event):
+        def logaritmize(data):
+            def surreal_log(x):
+                return x and math.log(x) or 0
+            
+            return [(surreal_log(x), surreal_log(y)) for x, y in data]
+            
         regex = re.compile(self.txt_filter.GetValue(), re.I)
         plot_log = self.chk_log_log.IsChecked()
         plot_outputs = self.rb_edge_direction.GetSelection() == 1
@@ -145,17 +151,21 @@ class PlotOptionsWindow(wx.Dialog):
                 data[connectivity[node]] -= 1
             connectivity[node] = connectivity.setdefault(node, 0) + 1
             data[connectivity[node]] = data.setdefault(connectivity[node], 0) + 1
+
+        tuples = data.items()
         
-        tuples = [(plot_log and math.log(a) or a, plot_log and math.log(b) or b) for (a, b) in data.items()]
+        if plot_log:
+            tuples = logaritmize(tuples)
+
         chart = Gnuplot.Gnuplot(persist=1)
         chart.title("Node connectivity")
-        chart.xlabel("Number of %s" % (plot_outputs and "outputs" or "inputs"))
-        chart.ylabel("Number of nodes")
+        chart.xlabel("Number of %s" % ((plot_outputs and "outputs" or "inputs") + (plot_log and " (log)" or "")))
+        chart.ylabel("Number of nodes%s" + (plot_log and " (log)" or ""))
         chart("set xrange [0:]")
         chart("set yrange [0:]")
         chart("set style fill solid border -1")
         chart("plot '-' with boxes")
-        chart("%s" % "\n".join(["%s %s" % (a, b) for (a, b) in data.items()]))
+        chart("%s" % "\n".join(["%s %s" % (a, b) for (a, b) in tuples]))
         chart("e")
 
 
