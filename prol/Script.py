@@ -6,7 +6,6 @@ import csv
 import sys
 import time
 import simulator as SIM
-import shutil
 
 argv = sys.argv
 
@@ -23,18 +22,29 @@ else:
     endProb = float(argv[6])
     incrementProb = float(argv[7])
 
-for root, dirs, files in os.walk("results", topdown=False):
-    for name in files:
-        os.remove(os.path.join(root, name))
-    for name in dirs:
-        os.rmdir(os.path.join(root, name))  
-os.rmdir("results")
+try:
+    for root, dirs, files in os.walk("results", topdown=False):
+        for name in files:
+            os.remove(os.path.join(root, name))
+        for name in dirs:
+            os.rmdir(os.path.join(root, name))  
+    os.rmdir("results")
+except:
+    print "Error!! - Impossible to delete files"
+    
+try:        
+    os.mkdir("results")
+    os.mkdir("%s" % os.path.join("results", name))
+except:
+    print "Error!! - Impossible to create folders"
 
-os.mkdir("results")
-os.mkdir("%s" % os.path.join("results", name))
+try:
+    writer = csv.writer(open(os.path.join("results", name+".csv"), "w"), delimiter=";")
+except:
+    print "Error!! - Impossible to create cvs file"
 
-writer = csv.writer(open(os.path.join("results", name+".csv"), "w"), delimiter=";")
-writer.writerow(["Name",
+try:
+    writer.writerow(["Name",
                             "Number Genes",
                             "AVG Edge",
                             "AVG Shortest Path",
@@ -43,11 +53,41 @@ writer.writerow(["Name",
                             "Is Scale-Free",
                             "Is Small World",
                             "Genome Creation Time",
-                            "Analysis Time"])
+                            "Analysis Time",
+                            "Genes",
+                            "mRNAs",
+                            "ncRNAs",
+                            "miRNAs"])
+except:
+    print "Error!! - Impossible to write table headers in cvs"
     
 for x in range(init, end+1, increment):
     inittime = time.time()
-    os.system("python heron.py " + str(x) + " " + os.path.join(os.path.join("results", name), str(x) + ".txt") + " -d " + os.path.join(os.path.join("results", name), str(x) + ".dot"))
+    #cmd = popen2.popen4("python heron.py " + str(x) + " " + os.path.join(os.path.join("results", name), str(x) + ".txt") + " -d " + os.path.join(os.path.join("results", name), str(x) + ".dot"))
+    #sys.stdout = open('out.log', 'w')
+    bu = os.popen("python heron.py " + str(x) + " " + os.path.join(os.path.join("results", name), str(x) + ".txt") + " -d " + os.path.join(os.path.join("results", name), str(x) + ".dot -v"))
+
+    aux = bu.readline().split(' ')
+    while len(aux) < 5 or aux[4] != "genes\n":
+        aux = bu.readline().split(' ')
+    genes =  aux[3]
+    
+    aux = bu.readline().split(' ')
+    while len(aux) < 5  or aux[4] != "mRNAs\n":
+        aux = bu.readline().split(' ')
+    mrnas =  aux[3]
+    
+    aux = bu.readline().split(' ')
+    while len(aux) < 7 or aux[6] != "ncRNAs\n":
+        aux = bu.readline().split(' ')
+    ncrnas =  aux[5]
+    
+    aux = bu.readline().split(' ')
+    while len(aux) < 5 or aux[4] != "miRNAs\n":
+        aux = bu.readline().split(' ')
+    mirnas =  aux[3]
+    
+    
     
     creationfenom = time.time() - inittime
     graph = PRG.dot_to_NXGraph(pydot.graph_from_dot_file(os.path.join(os.path.join("results", name), str(x) + ".dot")))
@@ -62,8 +102,17 @@ for x in range(init, end+1, increment):
                         str(PRG.scale_free(graph)),
                         str(PRG.small_worlds(graph)),
                         str(creationfenom),
-                        str(time.time() - inittime)]
-    writer.writerow(tablerow)
+                        str(time.time() - inittime),
+                        genes,
+                        mrnas,
+                        ncrnas,
+                        mirnas]
+    
+    try:
+        writer.writerow(tablerow)
+    except:
+        print "Error!! - Impossible to write row to cvs"
+        
     for y in [initProb + j*incrementProb for j in range((endProb-initProb)/incrementProb + 1)]:
         os.system("python simulator.py " + os.path.join(os.path.join("results", name), str(x) + ".txt") + " -p " + str(y) + " -o "+  os.path.join(os.path.join("results", name), str(x) + "-p" + str(y) + ".png") )
     
