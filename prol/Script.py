@@ -5,7 +5,28 @@ import pydot
 import csv
 import sys
 import time
+import yaml
+import random
 import simulator as SIM
+
+def read_configuration(filename):
+    """
+    Read the configuration from some file
+    """
+    try:
+        fx = open(filename, "r")
+        config = yaml.load(fx)
+        return config
+    except IOError, (errno, strerror):
+        print "Error while loading the configuration: %s" % strerror
+    finally:
+        fx.close()
+
+def dump_configuration(config, filename):
+    fx = file(filename, 'w')
+    yaml.dump(config, fx, default_flow_style=False)
+    fx.close()
+
 
 argv = sys.argv
 
@@ -27,20 +48,10 @@ else:
     initInibition = float(argv[11])
     endInibition = float(argv[12])
     incrementInibition = float(argv[13])
-
-try:
-    for root, dirs, files in os.walk("results", topdown=False):
-        for name in files:
-            os.remove(os.path.join(root, name))
-        for name in dirs:
-            os.rmdir(os.path.join(root, name))  
-    os.rmdir("results")
-except:
-    print "Error!! - Impossible to delete files"
-    
+    config_file = "config%d.yaml" % random.randint(0, 10000000)
+  
 try:        
-    os.mkdir("results")
-    os.mkdir("%s" % os.path.join("results", name))
+    os.makedirs("%s" % os.path.join("results", name))
 except:
     print "Error!! - Impossible to create folders"
 
@@ -69,12 +80,18 @@ for x in range(init, end+1, increment):
     for t in [initTreshold + ttt*incrementTreshold for ttt in range(int((endTreshold-initTreshold)/incrementTreshold) + 1)]:
         for inib in [initInibition + iiii*incrementInibition for iiii in range(int((endInibition-initInibition)/incrementInibition) + 1)]:
             
+            config = read_configuration("config.yaml")
+            config["protein/gene binding threshold"] = t
+            config["protein inhibition rate"] = inib
+            dump_configuration(config, config_file)
+
+
             
             inittime = time.time()
             #cmd = popen2.popen4("python heron.py " + str(x) + " " + os.path.join(os.path.join("results", name), str(x) + ".txt") + " -d " + os.path.join(os.path.join("results", name), str(x) + ".dot"))
             #sys.stdout = open('out.log', 'w')
-            print "python heron.py " + str(x) + " " + os.path.join(os.path.join("results", name), str(x) + ".txt") + " -d " + os.path.join(os.path.join("results", name), str(x) + ".dot -v -c config2.yaml")
-            bu = os.popen("python heron.py " + str(x) + " " + os.path.join(os.path.join("results", name), str(x) + ".txt") + " -d " + os.path.join(os.path.join("results", name), str(x) + ".dot -v -c config2.yaml"))
+            print "python heron.py " + str(x) + " " + os.path.join(os.path.join("results", name), str(x) + ".txt") + " -d " + os.path.join(os.path.join("results", name), str(x) + ".dot -v -c %s" % config_file)
+            bu = os.popen("python heron.py " + str(x) + " " + os.path.join(os.path.join("results", name), str(x) + ".txt") + " -d " + os.path.join(os.path.join("results", name), str(x) + ".dot -v -c %s" % config_file))
         
             aux = bu.readline().split(' ')
             while len(aux) < 5 or aux[4] != "genes\n":
@@ -122,4 +139,5 @@ for x in range(init, end+1, increment):
                 
             for y in [initProb + j*incrementProb for j in range(int((endProb-initProb)/incrementProb) + 1)]:
                 os.system("python simulator.py " + os.path.join(os.path.join("results", name), str(x) + ".txt") + " -p " + str(y) + " -o "+  os.path.join(os.path.join("results", name), str(x) + "-p" + str(y) + ".png") )
+
     
