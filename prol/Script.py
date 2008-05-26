@@ -90,8 +90,8 @@ for x in range(init, end+1, increment):
             inittime = time.time()
             #cmd = popen2.popen4("python heron.py " + str(x) + " " + os.path.join(os.path.join("results", name), str(x) + ".txt") + " -d " + os.path.join(os.path.join("results", name), str(x) + ".dot"))
             #sys.stdout = open('out.log', 'w')
-            print "python heron.py " + str(x) + " " + os.path.join(os.path.join("results", name), (str(x) + 't' + str(t) + 'i' + str(inib)) + ".txt") + " -d " + os.path.join(os.path.join("results", name), (str(x) + 't' + str(t) + 'i' + str(inib)) + ".dot -v -c %s" % config_file)
-            bu = os.popen("python heron.py " + str(x) + " " + os.path.join(os.path.join("results", name), (str(x) + 't' + str(t) + 'i' + str(inib)) + ".txt") + " -d " + os.path.join(os.path.join("results", name), (str(x) + 't' + str(t) + 'i' + str(inib)) + ".dot -v -c %s" % config_file))
+            print "python heron.py " + str(x) + " " + os.path.join(os.path.join("results", name), str(x) + 't' + str(t) + 'i' + str(inib) + ".txt") + " -d " + os.path.join(os.path.join("results", name), (str(x) + 't' + str(t) + 'i' + str(inib)) + ".dot -v -c %s" % config_file)
+            bu = os.popen("python heron.py " + str(x) + " " + os.path.join(os.path.join("results", name), str(x) + 't' + str(t) + 'i' + str(inib) + ".txt") + " -d " + os.path.join(os.path.join("results", name), (str(x) + 't' + str(t) + 'i' + str(inib)) + ".dot -v -c %s" % config_file))
         
             aux = bu.readline().split(' ')
             while len(aux) < 5 or aux[4] != "genes\n":
@@ -138,6 +138,6 @@ for x in range(init, end+1, increment):
                 print "Error!! - Impossible to write row to cvs"
                 
             for y in [initProb + j*incrementProb for j in range(int((endProb-initProb)/incrementProb) + 1)]:
-                os.system("python simulator.py " + os.path.join(os.path.join("results", name), (str(x) + str(t) + str(inib)) + ".txt") + " -p " + str(y) + " -o "+  os.path.join(os.path.join("results", name), str(x) + 't' + str(t) + 'i' + str(inib) + "p" + str(y) + ".png") )
+                os.system("python simulator.py " + os.path.join(os.path.join("results", name), str(x) + 't' + str(t) + 'i' + str(inib) + ".txt") + " -p " + str(y) + " -o "+  os.path.join(os.path.join("results", name), str(x) + 't' + str(t) + 'i' + str(inib) + "p" + str(y) + ".png") )
 
     
