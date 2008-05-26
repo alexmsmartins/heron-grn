@@ -50,8 +50,6 @@ try:
                             "AVG Shortest Path",
                             "RG AVG Smallest Path",
                             "RG Clustering Coefficient",
-                            "Is Scale-Free",
-                            "Is Small World",
                             "Genome Creation Time",
                             "Analysis Time",
                             "Genes",
@@ -65,6 +63,7 @@ for x in range(init, end+1, increment):
     inittime = time.time()
     #cmd = popen2.popen4("python heron.py " + str(x) + " " + os.path.join(os.path.join("results", name), str(x) + ".txt") + " -d " + os.path.join(os.path.join("results", name), str(x) + ".dot"))
     #sys.stdout = open('out.log', 'w')
+    print "python heron.py " + str(x) + " " + os.path.join(os.path.join("results", name), str(x) + ".txt") + " -d " + os.path.join(os.path.join("results", name), str(x) + ".dot -v")
     bu = os.popen("python heron.py " + str(x) + " " + os.path.join(os.path.join("results", name), str(x) + ".txt") + " -d " + os.path.join(os.path.join("results", name), str(x) + ".dot -v"))
 
     aux = bu.readline().split(' ')
@@ -90,17 +89,15 @@ for x in range(init, end+1, increment):
     
     
     creationfenom = time.time() - inittime
-    graph = PRG.dot_to_NXGraph(pydot.graph_from_dot_file(os.path.join(os.path.join("results", name), str(x) + ".dot")))
+    graph = PRG.dot_to_NXGraph(os.path.join(os.path.join("results", name), str(x) + ".dot"))
     
     inittime = time.time()
     tablerow = [ name + str(x),
                         str(x),
-                        str(PRG.calc_avg_edge_count(graph)),
-                        str(PRG.calc_avg_graph_shortest_path(graph)),
-                        str(PRG.calc_random_graph_avg_smallest_path(graph)),
-                        str(PRG.calc_random_graph_clust_coef(graph)),
-                        str(PRG.scale_free(graph)),
-                        str(PRG.small_worlds(graph)),
+                        str(PRG.average_degree(graph)),
+                        str(PRG.average_shortest_path(graph)),
+                        str(PRG.average_shortest_path_random_graph(graph.number_of_nodes(), graph.number_of_edges())),
+                        str(PRG.average_clustering_random_graph(graph.number_of_nodes(), graph.number_of_edges())),
                         str(creationfenom),
                         str(time.time() - inittime),
                         genes,
@@ -113,6 +110,6 @@ for x in range(init, end+1, increment):
     except:
         print "Error!! - Impossible to write row to cvs"
         
-    for y in [initProb + j*incrementProb for j in range((endProb-initProb)/incrementProb + 1)]:
+    for y in [initProb + j*incrementProb for j in range(int((endProb-initProb)/incrementProb) + 1)]:
         os.system("python simulator.py " + os.path.join(os.path.join("results", name), str(x) + ".txt") + " -p " + str(y) + " -o "+  os.path.join(os.path.join("results", name), str(x) + "-p" + str(y) + ".png") )
     
