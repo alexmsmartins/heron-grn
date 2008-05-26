@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from genome import *
 from rna import NonCodingRNA
+import networkx as NX
 import graph
 import random
 import pydot
@@ -148,13 +149,14 @@ class Heron:
         """
         Save the graph as a .dot file
         """
-        edges = []
-        for node in self.grn.get_nodes():
-            for edge in self.grn.nodes[node]:
-                edges.append((node.id, edge.id))
-                
-        g = pydot.graph_from_edges(edges, directed=True)
-        g.write(output_file)
+        fx = open(output_file, "w")
+        fx.write("digraph grn\n{\n")
+        for node, out_edges in self.grn.nodes.items():
+            for edge in out_edges:
+                fx.write("    %s -> %s;\n" % (node.id, edge.id))
+
+        fx.write("}")
+        fx.close()
 
     def __create_graph(self, genes, mRNAs, ncRNAs, proteins, miRNAs, verbose, advance=lambda n:None):
         """
