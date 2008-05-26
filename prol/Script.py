@@ -138,6 +138,6 @@ for x in range(init, end+1, increment):
                 print "Error!! - Impossible to write row to cvs"
                 
             for y in [initProb + j*incrementProb for j in range(int((endProb-initProb)/incrementProb) + 1)]:
-                os.system("python simulator.py " + os.path.join(os.path.join("results", name), (str(x) + str(t) + str(inib)) + ".txt") + " -p " + (str(x) + 't' + str(t) + 'i' + str(inib) + str(y)) + " -o "+  os.path.join(os.path.join("results", name), str(x) + 't' + str(t) + 'i' + str(inib) + "p" + str(y) + ".png") )
+                os.system("python simulator.py " + os.path.join(os.path.join("results", name), (str(x) + str(t) + str(inib)) + ".txt") + " -p " + str(y) + " -o "+  os.path.join(os.path.join("results", name), str(x) + 't' + str(t) + 'i' + str(inib) + "p" + str(y) + ".png") )
 
     
