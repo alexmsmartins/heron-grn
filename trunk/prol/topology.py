@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import pydot
 import networkx as NX
 import math
-from math import sqrt
+from math import sqrt, log
 from numpy import *
 
 def small_worlds_from_file(path):
@@ -50,45 +50,45 @@ def small_worlds(graph):
     
     return (above_avg > graph.size() * 0.5) and (avgcoef > calc_random_graph_clust_coef(graph)) and (calc_avg_graph_shortest_path(graph) < calc_random_graph_avg_smallest_path(graph))
 
-def calc_random_graph_clust_coef(graph):
+def average_clustering_random_graph(nodes, edges):
     """
     Calcula o coeficiente de clustering de um random graph com
-    o mesmo nÃºmero de nÃ³s que o grafo fornecido
+    um determinado numero de nos e ligacoes.
     """
-    return calc_avg_edge_count(graph) / graph.size()
+    return float(edges) / nodes / nodes
 
-def calc_random_graph_avg_smallest_path(graph):
+def average_shortest_path_random_graph(nodes, edges):
     """
-    Calcula a mÃ©dia de distÃªncias mais curtas de um random graph com
-    o mesmo nÃºmero de nÃ³s que o grafo fornecido
+    Calcula a media das distancias mais curtas entre todos os nos de um random
+    graph com um determinado numero de nos e ligacoes.
     """
-    return log(graph.size()) / log(calc_avg_edge_count(graph))
+    return log(nodes) / log(float(edges) / nodes)
 
-def calc_avg_graph_shortest_path(graph):
+def average_shortest_path(graph):
     """
-    Calcula a mÃ©dia das distÃ¢ncias mais curtas entre todos os nÃ³s
+    Calcula a media das distancias mais curtas entre todos os nos
     """
     lengths = NX.path.all_pairs_shortest_path_length(graph)
-    print lengths
     return sum(sum(lengths[node].values()) for node in lengths.keys()) / float(graph.number_of_nodes())
 
+def average_degree(graph):
+    """
+    Calcula o numero medio de ligacoes por no
+    """
+    return float(graph.number_of_edges()) / graph.number_of_nodes()
 
-def dot_to_NXGraph(dotgraph):
+def dot_to_NXGraph(path):
     """
     Converte um grafo pydot.Dot em networkx.Graph
     """
-    graph = NX.Graph()
-    
-    for edge in dotgraph.get_edge_list():
-        graph.add_edge((edge.get_source(), edge.get_destination()))
-        
-    return graph.to_directed()
+    return NX.nx_pydot.read_dot(path)
+#    graph = NX.Graph()
+#    
+#    for edge in dotgraph.get_edge_list():
+#        graph.add_edge((edge.get_source(), edge.get_destination()))
+#        
+#    return graph.to_directed()
 
-def calc_avg_edge_count(graph):
-    """
-    Calcula o nÃºmero mÃ©dio de ligaÃ§Ãµes por nÃ³
-    """
-    return float(graph.number_of_edges())/graph.number_of_nodes()
 
 def scale_free(graph):
     """

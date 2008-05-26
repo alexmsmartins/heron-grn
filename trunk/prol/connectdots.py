@@ -24,6 +24,9 @@ import wx
 import os
 import networkx as NX
 import topology
+import math
+import re
+import Gnuplot, Gnuplot.funcutils
 
 class StatisticsWindow(wx.Dialog):
     """ Statistics window """
@@ -34,8 +37,10 @@ class StatisticsWindow(wx.Dialog):
         """
         self.graph = graph
         self.height = 250
-        self.width = 250
-        wx.Dialog.__init__(self, None, size=(self.width, self.height), title='Statistics')
+        self.width = 330
+        wx.Dialog.__init__(self, None, size=(self.width, self.height), \
+                               title='Statistics', \
+                               style = wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(sizer)
@@ -56,17 +61,102 @@ class StatisticsWindow(wx.Dialog):
         panel.GetSizer().Add(self.list, 1, wx.EXPAND)
 
     def fill_list(self):
-        statistics = [("Number of nodes", lambda graph: graph.number_of_nodes()),
-                      ("Number of edges", lambda graph: graph.number_of_edges()),
-                      ("Average degree", topology.calc_avg_edge_count),
-                      ("Clustering coefficient", NX.cluster.average_clustering),
-                      ("Average shortest path", topology.calc_avg_graph_shortest_path)
-                     ]  
-        for label, func in statistics:
-            self.list.Append([label, func(self.graph)])
+        def check_small_worlds_conditions(graph):
+            """
+            Checks that n > k > ln(n) > 1
 
-        self.list.SetColumnWidth(0, 150)
+            See the paper "Collective dynamics of 'small-world' networks", 
+            by Duncan J. Watts & Steven H. Strogatz
+            """
+            n = graph.number_of_nodes()
+            k = topology.average_degree(graph)
+            return n > k > math.log(k) > 1
+
+        statistics = [("Number of nodes (n)", lambda graph: graph.number_of_nodes()),
+                       ("Number of edges", lambda graph: graph.number_of_edges()),
+                      ("Average degree (k)", topology.average_degree),
+                      ("n > k > ln(n) > 1", check_small_worlds_conditions),
+                      ("Clustering coefficient", NX.cluster.average_clustering),
+                      ("Clustering coefficient (random)", lambda graph: \
+                           topology.average_clustering_random_graph(graph.number_of_nodes(), graph.number_of_edges())),
+                      ("Average shortest path", topology.average_shortest_path),
+                      ("Average shortest path (random)", lambda graph: \
+                           topology.average_shortest_path_random_graph(graph.number_of_nodes(), graph.number_of_edges()))
+                      ]  
+        for label, func in statistics:
+            self.list.Append([label, "%s" % func(self.graph)])
+
+        self.list.SetColumnWidth(0, 230)
         self.list.SetColumnWidth(1, 80)
+
+
+class PlotOptionsWindow(wx.Dialog):
+    """ Plot options window """
+    
+    def __init__(self, graph):
+        """
+        Initializes the window
+        """
+        self.graph = graph
+        self.height = 145
+        self.width = 350
+        wx.Dialog.__init__(self, None, size=(self.width, self.height), \
+                               title='Plot options')
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        self.SetSizer(sizer)
+
+        panel = wx.Panel(self, -1)
+        sizer.Add(panel, 1, wx.EXPAND)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        panel.SetSizer(sizer)
+        self.CenterOnScreen()
+
+        self.fill_panel(panel)
+
+
+    def fill_panel(self, panel):
+        wx.StaticText(panel, -1, "Plot only nodes that match", pos=(8, 14))
+        self.txt_filter = wx.TextCtrl(panel, -1, ".*", pos=(190, 8), size=(150, 27))
+        self.chk_log_log = wx.CheckBox(panel, -1, "log/log plot", pos=(8, 40))
+
+        wx.StaticText(panel, -1, "Plot distribution of node", pos=(8, 72))
+        self.rb_edge_direction = wx.RadioBox(panel, -1, "", (165, 52), wx.DefaultSize, ["inputs", "outputs"], 1, style=wx.NO_BORDER)
+
+        
+        self.btn_ok = wx.Button(panel, wx.ID_OK, "OK", pos=(165, 102))
+        self.Bind(wx.EVT_BUTTON, self.on_ok, self.btn_ok)
+        btn_cancel = wx.Button(panel, wx.ID_CANCEL, "Cancel", pos=(255, 102))
+
+
+    def on_ok(self, event):
+        regex = re.compile(self.txt_filter.GetValue(), re.I)
+        plot_log = self.chk_log_log.IsChecked()
+        plot_outputs = self.rb_edge_direction.GetSelection() == 1
+
+        connectivity = {}
+        data = {}
+        for edge in self.graph.edges():
+            node = plot_outputs and edge[0] or edge[1]
+            if not regex.search(node):
+                continue
+
+            if connectivity.has_key(node):
+                data[connectivity[node]] -= 1
+            connectivity[node] = connectivity.setdefault(node, 0) + 1
+            data[connectivity[node]] = data.setdefault(connectivity[node], 0) + 1
+        
+        tuples = [(plot_log and math.log(a) or a, plot_log and math.log(b) or b) for (a, b) in data.items()]
+        chart = Gnuplot.Gnuplot(persist=1)
+        chart.title("Node connectivity")
+        chart.xlabel("Number of %s" % (plot_outputs and "outputs" or "inputs"))
+        chart.ylabel("Number of nodes")
+        chart("set xrange [0:]")
+        chart("set yrange [0:]")
+        chart("set style fill solid border -1")
+        chart("plot '-' with boxes")
+        chart("%s" % "\n".join(["%s %s" % (a, b) for (a, b) in data.items()]))
+        chart("e")
 
 
 class MainWindow(wx.Frame):
@@ -116,6 +206,8 @@ class MainWindow(wx.Frame):
                       ('&Quit\tCtrl+Q', 'Terminate the application', None, self.on_file_exit)),
                      ('&View',
                       ('&Statistics', 'View statistics', None, self.on_view_statistics)),
+                     ('&Plot',
+                      ('&Node connectivity...', 'Node connectivity', None, self.on_plot_node_connectivity)),
                      
 #                     ('&Tools',
 #                      ('&Run', 'Runs the current GA', None, self.OnRun),
@@ -188,6 +280,13 @@ class MainWindow(wx.Frame):
         Show the statistics window
         """
         dialog = StatisticsWindow(self.open_graph)
+        dialog.Show()
+
+    def on_plot_node_connectivity(self, event):
+        """
+        Opens the dialog to let the user choose plot options
+        """
+        dialog = PlotOptionsWindow(self.open_graph)
         dialog.Show()
 
 

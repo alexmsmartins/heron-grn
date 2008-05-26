@@ -125,6 +125,9 @@ class Heron:
         for ncRNA in ncRNAs:
             miRNAs += ncRNA.create_miRNAs(self.config["miRNA/mRNA binding site size"])
 
+        if verbose:
+            print " * Found %d miRNAs" % len(miRNAs)
+
         advance(step=4, miRNAs=len(miRNAs))
 
         # Create the graph
