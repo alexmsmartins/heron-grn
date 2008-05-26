@@ -9,9 +9,9 @@ import simulator as SIM
 
 argv = sys.argv
 
-if len(argv) != 8:
+if len(argv) != 14:
     print "error - args.."
-    print "Script.py <file name> <number genes initial> <number genes final> <genes increment> <initial activation probability> <final activation probability> <probability increment>"
+    print "Script.py <file name> <number genes initial> <number genes final> <genes increment> <initial activation probability> <final activation probability> <probability increment> <initial treshold> <final treshold> <treshold increment> <initial inibition> <final inibition> <inibition increment>"
     exit()
 else:
     name = argv[1]
@@ -21,6 +21,12 @@ else:
     initProb = float(argv[5])
     endProb = float(argv[6])
     incrementProb = float(argv[7])
+    initTreshold = float(argv[8])
+    endTreshold = float(argv[9])
+    incrementTreshold = float(argv[10])
+    initInibition = float(argv[11])
+    endInibition = float(argv[12])
+    incrementInibition = float(argv[13])
 
 try:
     for root, dirs, files in os.walk("results", topdown=False):
@@ -60,56 +66,60 @@ except:
     print "Error!! - Impossible to write table headers in cvs"
     
 for x in range(init, end+1, increment):
-    inittime = time.time()
-    #cmd = popen2.popen4("python heron.py " + str(x) + " " + os.path.join(os.path.join("results", name), str(x) + ".txt") + " -d " + os.path.join(os.path.join("results", name), str(x) + ".dot"))
-    #sys.stdout = open('out.log', 'w')
-    print "python heron.py " + str(x) + " " + os.path.join(os.path.join("results", name), str(x) + ".txt") + " -d " + os.path.join(os.path.join("results", name), str(x) + ".dot -v")
-    bu = os.popen("python heron.py " + str(x) + " " + os.path.join(os.path.join("results", name), str(x) + ".txt") + " -d " + os.path.join(os.path.join("results", name), str(x) + ".dot -v"))
-
-    aux = bu.readline().split(' ')
-    while len(aux) < 5 or aux[4] != "genes\n":
-        aux = bu.readline().split(' ')
-    genes =  aux[3]
-    
-    aux = bu.readline().split(' ')
-    while len(aux) < 5  or aux[4] != "mRNAs\n":
-        aux = bu.readline().split(' ')
-    mrnas =  aux[3]
-    
-    aux = bu.readline().split(' ')
-    while len(aux) < 7 or aux[6] != "ncRNAs\n":
-        aux = bu.readline().split(' ')
-    ncrnas =  aux[5]
-    
-    aux = bu.readline().split(' ')
-    while len(aux) < 5 or aux[4] != "miRNAs\n":
-        aux = bu.readline().split(' ')
-    mirnas =  aux[3]
-    
-    
-    
-    creationfenom = time.time() - inittime
-    graph = PRG.dot_to_NXGraph(os.path.join(os.path.join("results", name), str(x) + ".dot"))
-    
-    inittime = time.time()
-    tablerow = [ name + str(x),
-                        str(x),
-                        str(PRG.average_degree(graph)),
-                        str(PRG.average_shortest_path(graph)),
-                        str(PRG.average_shortest_path_random_graph(graph.number_of_nodes(), graph.number_of_edges())),
-                        str(PRG.average_clustering_random_graph(graph.number_of_nodes(), graph.number_of_edges())),
-                        str(creationfenom),
-                        str(time.time() - inittime),
-                        genes,
-                        mrnas,
-                        ncrnas,
-                        mirnas]
-    
-    try:
-        writer.writerow(tablerow)
-    except:
-        print "Error!! - Impossible to write row to cvs"
+    for t in [initTreshold + ttt*incrementTreshold for ttt in range(int((endTreshold-initTreshold)/incrementTreshold) + 1)]:
+        for inib in [initInibition + iiii*incrementInibition for iiii in range(int((endInibition-initInibition)/incrementInibition) + 1)]:
+            
+            
+            inittime = time.time()
+            #cmd = popen2.popen4("python heron.py " + str(x) + " " + os.path.join(os.path.join("results", name), str(x) + ".txt") + " -d " + os.path.join(os.path.join("results", name), str(x) + ".dot"))
+            #sys.stdout = open('out.log', 'w')
+            print "python heron.py " + str(x) + " " + os.path.join(os.path.join("results", name), str(x) + ".txt") + " -d " + os.path.join(os.path.join("results", name), str(x) + ".dot -v -c config2.yaml")
+            bu = os.popen("python heron.py " + str(x) + " " + os.path.join(os.path.join("results", name), str(x) + ".txt") + " -d " + os.path.join(os.path.join("results", name), str(x) + ".dot -v -c config2.yaml"))
         
-    for y in [initProb + j*incrementProb for j in range(int((endProb-initProb)/incrementProb) + 1)]:
-        os.system("python simulator.py " + os.path.join(os.path.join("results", name), str(x) + ".txt") + " -p " + str(y) + " -o "+  os.path.join(os.path.join("results", name), str(x) + "-p" + str(y) + ".png") )
+            aux = bu.readline().split(' ')
+            while len(aux) < 5 or aux[4] != "genes\n":
+                aux = bu.readline().split(' ')
+            genes =  aux[3]
+            
+            aux = bu.readline().split(' ')
+            while len(aux) < 5  or aux[4] != "mRNAs\n":
+                aux = bu.readline().split(' ')
+            mrnas =  aux[3]
+            
+            aux = bu.readline().split(' ')
+            while len(aux) < 7 or aux[6] != "ncRNAs\n":
+                aux = bu.readline().split(' ')
+            ncrnas =  aux[5]
+            
+            aux = bu.readline().split(' ')
+            while len(aux) < 5 or aux[4] != "miRNAs\n":
+                aux = bu.readline().split(' ')
+            mirnas =  aux[3]
+            
+            
+            
+            creationfenom = time.time() - inittime
+            graph = PRG.dot_to_NXGraph(os.path.join(os.path.join("results", name), str(x) + ".dot"))
+            
+            inittime = time.time()
+            tablerow = [ name + str(x),
+                                str(x),
+                                str(PRG.average_degree(graph)),
+                                str(PRG.average_shortest_path(graph)),
+                                str(PRG.average_shortest_path_random_graph(graph.number_of_nodes(), graph.number_of_edges())),
+                                str(PRG.average_clustering_random_graph(graph.number_of_nodes(), graph.number_of_edges())),
+                                str(creationfenom),
+                                str(time.time() - inittime),
+                                genes,
+                                mrnas,
+                                ncrnas,
+                                mirnas]
+            
+            try:
+                writer.writerow(tablerow)
+            except:
+                print "Error!! - Impossible to write row to cvs"
+                
+            for y in [initProb + j*incrementProb for j in range(int((endProb-initProb)/incrementProb) + 1)]:
+                os.system("python simulator.py " + os.path.join(os.path.join("results", name), str(x) + ".txt") + " -p " + str(y) + " -o "+  os.path.join(os.path.join("results", name), str(x) + "-p" + str(y) + ".png") )
     
