@@ -90,7 +90,7 @@ for x in range(init, end+1, increment):
             inittime = time.time()
             #cmd = popen2.popen4("python heron.py " + str(x) + " " + os.path.join(os.path.join("results", name), str(x) + ".txt") + " -d " + os.path.join(os.path.join("results", name), str(x) + ".dot"))
             #sys.stdout = open('out.log', 'w')
-            print "python heron.py " + str(x) + " " + os.path.join(os.path.join("results", name), str(x) + ".txt") + " -d " + os.path.join(os.path.join("results", name), str(x) + ".dot -v -c %s" % config_file)
+            print "python heron.py " + str(x) + " " + os.path.join(os.path.join("results", name), (str(x) + 't' + str(t) + 'i' + str(inib)) + ".txt") + " -d " + os.path.join(os.path.join("results", name), (str(x) + 't' + str(t) + 'i' + str(inib)) + ".dot -v -c %s" % config_file)
             bu = os.popen("python heron.py " + str(x) + " " + os.path.join(os.path.join("results", name), (str(x) + 't' + str(t) + 'i' + str(inib)) + ".txt") + " -d " + os.path.join(os.path.join("results", name), (str(x) + 't' + str(t) + 'i' + str(inib)) + ".dot -v -c %s" % config_file))
         
             aux = bu.readline().split(' ')
@@ -116,7 +116,7 @@ for x in range(init, end+1, increment):
             
             
             creationfenom = time.time() - inittime
-            graph = PRG.dot_to_NXGraph(os.path.join(os.path.join("results", name), str(x) + ".dot"))
+            graph = PRG.dot_to_NXGraph(os.path.join(os.path.join("results", name), (str(x) + 't' + str(t) + 'i' + str(inib)) + ".dot"))
             
             inittime = time.time()
             tablerow = [ name + str(x),
