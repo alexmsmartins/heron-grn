@@ -26,7 +26,7 @@ class GRNElement(object):
 
     count = 0
 
-    def __init__(self, parent):
+    def __init__(self, parent, id=None):
         """
         Creates a new GRN element with the given parent
 
@@ -35,6 +35,17 @@ class GRNElement(object):
         """
         self.parent = parent
         self.__class__.count += 1
-        self.id = "%s_%d" % (type(self).__name__, self.__class__.count)
+        self.id = id
+        if not self.id:
+            self.id = "%s_%d" % (type(self).__name__, self.__class__.count)
         self.enabled = False
+
+    def __repr__(self):
+        return "GRN(%s)" % self.id
+
+    def __eq__(self, other):
+        return self.id == other.id
+
+    def __hash__(self):
+        return self.id.__hash__()
         

@@ -29,6 +29,7 @@ import pydot
 import pickle
 import yaml
 import sys
+import dot
 from optparse import OptionParser
 
 
@@ -143,19 +144,6 @@ class Heron:
         
         fx = open(output_file, "w")
         pickle.dump(self.grn, fx)
-        fx.close()
-
-    def save_as_dot(self, output_file):
-        """
-        Save the graph as a .dot file
-        """
-        fx = open(output_file, "w")
-        fx.write("digraph grn\n{\n")
-        for node, out_edges in self.grn.nodes.items():
-            for edge in out_edges:
-                fx.write("    %s -> %s;\n" % (node.id, edge.id))
-
-        fx.write("}")
         fx.close()
 
     def __create_graph(self, genes, mRNAs, ncRNAs, proteins, miRNAs, verbose, advance=lambda n:None):
@@ -289,5 +277,5 @@ if __name__ == '__main__':
     heron.dump(output_file)
 
     if options.dot_filename != None:
-        heron.save_as_dot(options.dot_filename)    
+        dot.write_graph(heron.grn, options.dot_filename)    
 

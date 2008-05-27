@@ -26,6 +26,99 @@ import random
 from optparse import OptionParser, OptionValueError
 import Gnuplot, Gnuplot.funcutils
 
+class Simulator(object):
+    """
+    Simulator object
+    """
+
+    def __init__(self, grn, probability):
+        """
+        Initializes the simulator
+        """
+        self.grn = grn
+        self.__initialize_network(probability)
+  
+
+    def simulate_network(self, steps, types, img_output=None, verbose=False):
+        """
+        Simulate the network and show the behavior of the desired nodes
+        on gnuplot
+        """
+        chart = Gnuplot.Gnuplot(persist=1)
+        chart.title("Network dynamics")
+        chart.xlabel(",".join(types))
+        chart.ylabel("Steps")
+        chart("set pointsize 0.3")
+
+        if img_output != None:
+            chart("set terminal png")
+            chart("set output '%s'" % img_output)
+        data = []
+        for step in range(steps):
+            if verbose:
+                print " * Step %3d of %d" % (step + 1, steps)
+
+            chart("set yrange[0:%d]" % (step + 1))
+            data += [(node, step) for node in self.__simulate_one_step(types)]
+
+            if img_output == None and len(data) > 0:
+                chart.plot(data)
+
+        if len(data) > 0:
+            chart.plot(data)
+
+
+    def __initialize_network(self, probability):
+        """
+        Activates some genes choosen randomly.
+        """
+        for node in self.grn.get_nodes():
+            if node.id[0:node.id.find("_")] == "Gene" and random.random() <= probability:
+                node.enabled = True
+
+
+    def __simulate_one_step(self, types):
+        """
+        Simulate the execution of the GRN for one step
+        """
+
+        data = []
+        on = []
+        off = []
+        j = 0
+        for node in self.grn.get_nodes():
+            if node.id[0:node.id.find("_")] in types:
+                if node.enabled:
+                    data.append(j)
+                j += 1
+
+            # For each neighbor...
+            for neighbor in self.grn.get_node(node):
+                weight = self.grn.weights[(node, neighbor)]
+
+                if node.enabled == True:
+                    if weight > 0:
+                        # Activate the neighbor
+                        on.append(neighbor)
+                    else:
+                        # Repress the neighbor
+                        off.append(neighbor)
+                else:
+                    # Any active element turns inactive if its activator
+                    # is not active
+                    if weight > 0 and neighbor.enabled:
+                        off.append(neighbor)
+
+        for element in on:
+            element.enabled = True
+
+        # Repression takes precedence and so is applied after activation
+        for element in off:
+            element.enabled = False
+
+        return data
+
+
 def parse_args():
     """
     Parse command-line arguments
@@ -37,7 +130,7 @@ def parse_args():
 	"""
 	type_str = parser.rargs[0]
 	try:
-	    types = map(eval, type_str.split(","))
+	    types = type_str.split(",")
 	    setattr(parser.values, option.dest, types)
 	except:
 	    raise OptionValueError("Unknown type")
@@ -53,7 +146,7 @@ def parse_args():
     parser.add_option("-s", "--steps", dest="steps", type="int", default=100,
                       help="Number of steps")
     parser.add_option("-t", "--types", dest="types", action="callback",
-		      callback=parse_types, default=[Gene],
+		      callback=parse_types, default=["Gene"],
 		      help="Types to plot in the graph, separated by commas.")
     parser.add_option("-v", action="store_true", dest="verbose",
                       help="Verbose mode")
@@ -69,57 +162,6 @@ def parse_args():
     return (options, input_file)
 
 
-def initialize_network(grn, probability):
-    """
-    Activates some genes choosen randomly.
-    """
-    for node in grn.get_nodes():
-        if isinstance(node, Gene) and random.random() <= probability:
-            node.enabled = True
-    
-
-def simulate_network(grn, options):
-    """
-    Simulate the execution of the GRN for one step
-    """
-
-    data = []
-    on = []
-    off = []
-    j = 0
-    for node in grn.get_nodes():
-        if type(node) in options.types:
-            if node.enabled:
-                data.append(j)
-            j += 1
-
-        # For each neighbor...
-        for neighbor in grn.get_node(node):
-            weight = grn.weights[(node, neighbor)]
-
-            if node.enabled == True:
-                if weight > 0:
-                    # Activate the neighbor
-                    on.append(neighbor)
-                else:
-                    # Repress the neighbor
-                    off.append(neighbor)
-            else:
-                # Any active element turns inactive if its activator
-                # is not active
-                if weight > 0 and neighbor.enabled:
-                    off.append(neighbor)
-
-    for element in on:
-        element.enabled = True
-
-    # Repression takes precedence and so is applied after activation
-    for element in off:
-        element.enabled = False
-
-    return data
-
-
 if __name__ == '__main__':
     (options, input_file) = parse_args()
 
@@ -130,27 +172,5 @@ if __name__ == '__main__':
         print "Error while reading the graph file: %s" % strerror
         exit()
 
-    initialize_network(grn, options.probability)
-
-    chart = Gnuplot.Gnuplot()
-    chart.title("Network dynamics")
-    chart.xlabel("Genes")
-    chart.ylabel("Steps")
-    chart("set pointsize 0.3")
-    if options.output != None:
-        chart("set terminal png")
-        chart("set output '%s'" % options.output)
-    data = []
-    for step in range(options.steps):
-        if options.verbose:
-            print " * Step %3d of %d" % (step + 1, options.steps)
-
-        chart("set yrange[0:%d]" % (step + 1))
-	data += [(node, step) for node in simulate_network(grn, options)]
-        if options.output == None:
-            chart.plot(data)
-
-    chart.plot(data)
-
-    if options.output == None:
-        raw_input("")
+    simulator = Simulator(grn, options.probability)
+    simulator.simulate_network(options.steps, options.types, img_output=options.output, verbose=options.verbose)
