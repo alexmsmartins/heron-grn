@@ -43,8 +43,8 @@ class StatisticsWindow(wx.Dialog):
         Initializes the window
         """
         self.graph = graph
-        self.height = 250
-        self.width = 330
+        self.height = 270
+        self.width = 370
         wx.Dialog.__init__(self, None, size=(self.width, self.height), \
                                title='Statistics', \
                                style = wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
@@ -85,9 +85,11 @@ class StatisticsWindow(wx.Dialog):
                       ("n > k > ln(n) > 1", check_small_worlds_conditions),
                       ("Directed?", lambda graph: graph.is_directed()),
                       ("Clustering coefficient", NX.average_clustering),
+                      ("Clustering coefficient undirected", lambda graph: NX.average_clustering(graph.to_undirected())),
                       ("Clustering coefficient (random)", lambda graph: \
                            topology.average_clustering_random_graph(graph.number_of_nodes(), graph.number_of_edges())),
                       ("Average shortest path", topology.average_shortest_path),
+                      ("Average shortest path undirected", lambda graph: topology.average_shortest_path(graph.to_undirected())),
                       ("Average shortest path (random)", lambda graph: \
                            topology.average_shortest_path_random_graph(graph.number_of_nodes(), graph.number_of_edges()))
                       ]  
@@ -96,7 +98,7 @@ class StatisticsWindow(wx.Dialog):
             self.list.Append([label, "%s" % func(self.graph)])
 
         self.list.SetColumnWidth(0, 230)
-        self.list.SetColumnWidth(1, 80)
+        self.list.SetColumnWidth(1, 120)
 
 
 class PlotOptionsWindow(wx.Dialog):
