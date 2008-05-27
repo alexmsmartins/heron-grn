@@ -77,7 +77,7 @@ class StatisticsWindow(wx.Dialog):
             """
             n = graph.number_of_nodes()
             k = topology.average_degree(graph)
-            return n > k > math.log(k) > 1
+            return n > k > math.log(n) > 1
 
         statistics = [("Number of nodes (n)", lambda graph: graph.number_of_nodes()),
                       ("Number of edges", lambda graph: graph.number_of_edges()),
