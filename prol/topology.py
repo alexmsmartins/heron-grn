@@ -25,31 +25,6 @@ import math
 from math import sqrt, log
 from numpy import *
 
-def small_worlds_from_file(path):
-    """
-    recebe um nome de ficeiro como input e 
-    retorna se esta rede Ã© small world ou nÃ£o de
-    acordo com os critÃ©rios definidos.
-    Um grafo Ã© considerado small-world se Ci for maior
-    do que um random graph com o mesmo set de vÃ©rtices
-    e se tem uma mÃ©dia das distÃ¢ncias mais curtas baixa.
-    """
-    return small_worlds(dot_to_NXGraph(pydot.graph_from_dot_file(path)))
-    
-def small_worlds(graph):
-    """
-    recebe um objecto NX.Graph como input e 
-    retorna o ...
-    """
-    avgcoef = calc_random_graph_clust_coef(graph)
-    above_avg = 0
-    
-    for coef in NX.clustering(graph):
-        if coef > avgcoef:
-            above_avg += 1
-    
-    return (above_avg > graph.size() * 0.5) and (avgcoef > calc_random_graph_clust_coef(graph)) and (calc_avg_graph_shortest_path(graph) < calc_random_graph_avg_smallest_path(graph))
-
 def average_clustering_random_graph(nodes, edges):
     """
     Calcula o coeficiente de clustering de um random graph com
@@ -76,19 +51,6 @@ def average_degree(graph):
     Calcula o numero medio de ligacoes por no
     """
     return float(graph.number_of_edges()) / graph.number_of_nodes()
-
-def dot_to_NXGraph(path):
-    """
-    Converte um grafo pydot.Dot em networkx.Graph
-    """
-    return NX.nx_pydot.read_dot(path)
-#    graph = NX.Graph()
-#    
-#    for edge in dotgraph.get_edge_list():
-#        graph.add_edge((edge.get_source(), edge.get_destination()))
-#        
-#    return graph.to_directed()
-
 
 def scale_free(graph):
     """
@@ -124,10 +86,3 @@ def quadratic_error(a, b, list_x, lixt_y):
     for x, y in zip(list_x, lixt_y):
         d += pow(y - a*x+b, 2)
     return sqrt(d/len(list_x))
-
-      
-def scale_free_from_file(path):
-    """
-    recebe um ficheiro para verificar se o grafo Ã© scale free
-    """
-    return scale_free(dot_to_NXGraph(pydot.graph_from_dot_file(path)))

@@ -26,6 +26,7 @@ import wx.lib.newevent as newevent
 import wx.wizard as wiz
 import threading
 import os
+import dot
 from heron import Heron
 
 # Create an "Advance" event - the event that HeRoN generates when it advances
@@ -119,7 +120,7 @@ class ParametersPage(wiz.WizardPageSimple):
         }
         wx.StaticText(panel, -1, "Binding function:", pos=(8, 298))
         self.rb_functions = wx.RadioBox(self, -1, "", (10, 302), wx.DefaultSize, self.functions.keys(), \
-                                            -1, wx.NO_BORDER)
+                                            4, wx.NO_BORDER)
 
     def post_processing(self, event):
         """
@@ -376,7 +377,7 @@ class SavePage(wiz.WizardPageSimple):
         heron.dump(path)
 
         if save_as_dot:
-            heron.save_as_dot(path + ".dot")
+            dot.write_graph(heron.grn, path + ".dot")
         
 
         

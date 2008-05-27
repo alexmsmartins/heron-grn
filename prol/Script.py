@@ -1,6 +1,6 @@
 import os
 import topology as PRG
-import networkx as NX
+#import networkx as NX
 import pydot
 import csv
 import sys
@@ -116,28 +116,28 @@ for x in range(init, end+1, increment):
             
             
             creationfenom = time.time() - inittime
-            graph = PRG.dot_to_NXGraph(os.path.join(os.path.join("results", name), (str(x) + 't' + str(t) + 'i' + str(inib)) + ".dot"))
+           # graph = PRG.dot_to_NXGraph(os.path.join(os.path.join("results", name), (str(x) + 't' + str(t) + 'i' + str(inib)) + ".dot"))
             
-            inittime = time.time()
-            tablerow = [ name + str(x),
-                                str(x),
-                                str(PRG.average_degree(graph)),
-                                str(PRG.average_shortest_path(graph)),
-                                str(PRG.average_shortest_path_random_graph(graph.number_of_nodes(), graph.number_of_edges())),
-                                str(PRG.average_clustering_random_graph(graph.number_of_nodes(), graph.number_of_edges())),
-                                str(creationfenom),
-                                str(time.time() - inittime),
-                                genes,
-                                mrnas,
-                                ncrnas,
-                                mirnas]
-            
-            try:
-                writer.writerow(tablerow)
-            except:
-                print "Error!! - Impossible to write row to cvs"
+           # inittime = time.time()
+           # tablerow = [ name + str(x),
+           #                     str(x),
+           #                     str(PRG.average_degree(graph)),
+           #                     str(PRG.average_shortest_path(graph)),
+           #                     str(PRG.average_shortest_path_random_graph(graph.number_of_nodes(), graph.number_of_edges())),
+           #                     str(PRG.average_clustering_random_graph(graph.number_of_nodes(), graph.number_of_edges())),
+           #                     str(creationfenom),
+           #                     str(time.time() - inittime),
+           #                     genes,
+           #                     mrnas,
+           #                     ncrnas,
+           #                     mirnas]
+          #  
+          #  try:
+          #      writer.writerow(tablerow)
+          #  except:
+          #      print "Error!! - Impossible to write row to cvs"
                 
             for y in [initProb + j*incrementProb for j in range(int((endProb-initProb)/incrementProb) + 1)]:
-                os.system("python simulator.py " + os.path.join(os.path.join("results", name), str(x) + 't' + str(t) + 'i' + str(inib) + ".txt") + " -p " + str(y) + " -o "+  os.path.join(os.path.join("results", name), str(x) + 't' + str(t) + 'i' + str(inib) + "p" + str(y) + ".png") )
+                os.system("python simulator.py -t MessengerRNA,Protein,MicroRNA " + os.path.join(os.path.join("results", name), str(x) + 't' + str(t) + 'i' + str(inib) + ".txt") + " -p " + str(y) + " -o "+  os.path.join(os.path.join("results", name), str(x) + 't' + str(t) + 'i' + str(inib) + "p" + str(y) + ".png") )
 
     
